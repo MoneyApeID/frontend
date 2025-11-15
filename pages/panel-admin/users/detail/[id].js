@@ -16,6 +16,7 @@ export default function UserDetail() {
   const [password, setPassword] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
   const [balanceType, setBalanceType] = useState('add');
+  const [walletType, setWalletType] = useState('balance');
   const [editData, setEditData] = useState({ name: '', number: '', status: '', investment_status: '' });
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState('');
@@ -104,7 +105,7 @@ export default function UserDetail() {
     try {
       const res = await adminRequest(`/users/balance/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ amount: Number(balanceAmount), type: balanceType })
+        body: JSON.stringify({ amount: Number(balanceAmount), type: balanceType, balance_type: walletType })
       });
       if (res && res.success) {
         setShowBalanceModal(false);
@@ -383,11 +384,21 @@ export default function UserDetail() {
             <div className="space-y-4">
               <div className="bg-white/5 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">Saldo Aktif</span>
+                  <span className="text-gray-400 text-sm">Saldo Balance</span>
                   <Icon icon="mdi:wallet" className="text-green-400 w-4 h-4" />
                 </div>
                 <div className="text-white font-bold text-lg">
                   Rp {user.balance.toLocaleString('id-ID')}
+                </div>
+              </div>
+
+              <div className="bg-white/5 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-400 text-sm">Saldo Income</span>
+                  <Icon icon="mdi:wallet" className="text-green-400 w-4 h-4" />
+                </div>
+                <div className="text-white font-bold text-lg">
+                  Rp {user.income.toLocaleString('id-ID')}
                 </div>
               </div>
 
@@ -602,10 +613,29 @@ export default function UserDetail() {
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Saldo Saat Ini</label>
+                  <label className="block text-gray-400 text-sm mb-2">Saldo Balance Saat Ini</label>
                   <div className="bg-white/5 rounded-2xl px-4 py-3 text-white font-medium">
                     Rp {user.balance.toLocaleString('id-ID')}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Saldo Income Saat Ini</label>
+                  <div className="bg-white/5 rounded-2xl px-4 py-3 text-white font-medium">
+                    Rp {user.income.toLocaleString('id-ID')}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Jenis Dompet</label>
+                  <select
+                    value={walletType}
+                    onChange={e => setWalletType(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all dark-select"
+                  >
+                    <option value="balance">Balance (Saldo Deposit)</option>
+                    <option value="income">Income (Saldo Income)</option>
+                  </select>
                 </div>
 
                 <div>

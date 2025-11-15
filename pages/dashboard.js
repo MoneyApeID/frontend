@@ -3,12 +3,49 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { getProducts } from '../utils/api';
-import { BANKS, PAYMENT_METHODS } from '../constants/products';
 import InvestmentModal from '../components/InvestmentModal';
 import Toast from '../components/Toast';
 import { Icon } from '@iconify/react';
 import BottomNavbar from '../components/BottomNavbar';
 import Image from 'next/image';
+import Copyright from '../components/copyright';
+
+const defaultUserSnapshot = {
+  name: '',
+  balance: 0,
+  income: 0,
+  active: false,
+  level: 1, // Default level 1
+  total_invest: 0,
+  total_invest_vip: 0,
+};
+
+const mapUserSnapshot = (parsed = {}) => {
+  const balance = parsed.balance ?? parsed.balance_main ?? parsed.balance_deposit ?? 0;
+  const income = parsed.income ?? parsed.profit ?? parsed.balance_income ?? parsed.withdrawable_balance ?? parsed.total_profit ?? 0;
+
+  return {
+    ...defaultUserSnapshot,
+    name: parsed.name || parsed.full_name || '',
+    balance,
+    income,
+    active: parsed.active || false,
+    level: parsed.level || parsed.vip_level || 1, // Default level 1 untuk user baru
+    total_invest: parsed.total_invest || parsed.totalInvestment || 0,
+    total_invest_vip: parsed.total_invest_vip || parsed.totalInvestVip || 0,
+  };
+};
+
+const getUserSnapshotFromStorage = () => {
+  if (typeof window === 'undefined') return defaultUserSnapshot;
+  const storedUser = localStorage.getItem('user');
+  if (!storedUser) return defaultUserSnapshot;
+  try {
+    return mapUserSnapshot(JSON.parse(storedUser));
+  } catch (error) {
+    return defaultUserSnapshot;
+  }
+};
 
 export default function Dashboard() {
   const router = useRouter();
@@ -21,9 +58,15 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
-  const [showPromoPopup, setShowPromoPopup] = useState(false);
-  const [hidePopupChecked, setHidePopupChecked] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupImageUrl, setPopupImageUrl] = useState(null);
+  const [popupLoading, setPopupLoading] = useState(false);
+
+  const refreshUserData = () => {
+    const snapshot = getUserSnapshotFromStorage();
+    setUserData(snapshot);
+    return snapshot;
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -33,33 +76,18 @@ export default function Dashboard() {
       router.push('/login');
       return;
     }
-    const storedUser = localStorage.getItem('user');
     const storedApplication = localStorage.getItem('application');
     
     const popupHiddenUntil = localStorage.getItem('popupHiddenUntil');
     const now = new Date().getTime();
     
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUserData({
-          name: parsed.name || '',
-          balance: parsed.balance || 0,
-          active: parsed.active || false,
-          level: parsed.level || 0,
-          total_invest: parsed.total_invest || 0,
-          total_invest_vip: parsed.total_invest_vip || 0
-        });
-      } catch (e) {
-        setUserData({ name: '', balance: 0, active: false, level: 0 });
-      }
-    }
+    setUserData(getUserSnapshotFromStorage());
 
     if (storedApplication) {
       try {
         const parsed = JSON.parse(storedApplication);
         setApplicationData({
-          name: parsed.name || 'Ciroos AI',
+          name: parsed.name || 'Money Rich',
           healthy: parsed.healthy || false,
           link_app: parsed.link_app,
           link_cs: parsed.link_cs,
@@ -67,24 +95,35 @@ export default function Dashboard() {
           logo: parsed.logo,
           max_withdraw: parsed.max_withdraw,
           min_withdraw: parsed.min_withdraw,
-          withdraw_charge: parsed.withdraw_charge
+          withdraw_charge: parsed.withdraw_charge,
+          popup: parsed.popup,
+          popup_title: parsed.popup_title
         });
       } catch (e) {
-        setApplicationData({ name: 'Ciroos AI', healthy: false });
+        setApplicationData({ name: 'Money Rich', healthy: false });
       }
     } else {
-      setApplicationData({ name: 'Ciroos AI', healthy: false });
+      setApplicationData({ name: 'Money Rich', healthy: false });
     }
     
     fetchProducts();
+  }, [router]);
 
+  // Fetch popup image when application data is loaded
+  useEffect(() => {
+    if (!applicationData?.popup) return;
+    
+    const popupHiddenUntil = localStorage.getItem('popupHiddenUntil');
+    const now = new Date().getTime();
+    
     if (!popupHiddenUntil || now > parseInt(popupHiddenUntil)) {
       const popupTimer = setTimeout(() => {
-        setShowWelcomePopup(true);
+        fetchPopupImage();
       }, 1000);
       return () => clearTimeout(popupTimer);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applicationData?.popup]);
 
   useEffect(() => {
     // Auto-select first product in selected category
@@ -150,169 +189,254 @@ export default function Dashboard() {
 
   const calculateTotalReturn = (product) => {
     if (!product) return 0;
-    return product.amount + (product.daily_profit * product.duration);
+    return (product.daily_profit * product.duration);
   };
+
+  const calculateROI = (product) => {
+    if (!product || !product.amount) return 0;
+    const totalProfit = calculateTotalReturn(product);
+    return (totalProfit / product.amount) * 100;
+  };
+
+  const formatPercentage = (value) => new Intl.NumberFormat('id-ID', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: value > 0 && value < 1 ? 1 : 0,
+  }).format(value);
 
   const getVIPConfig = (level) => {
     const configs = {
-      0: { icon: 'mdi:shield-account', gradient: 'from-gray-500 to-slate-600', emoji: '🎯' },
-      1: { icon: 'mdi:star-circle', gradient: 'from-yellow-700 to-orange-700', emoji: '⭐' },
-      2: { icon: 'mdi:medal', gradient: 'from-gray-400 to-gray-600', emoji: '🥈' },
-      3: { icon: 'mdi:trophy-variant', gradient: 'from-yellow-400 to-orange-500', emoji: '🏆' },
-      4: { icon: 'mdi:diamond-stone', gradient: 'from-blue-400 to-purple-600', emoji: '💎' },
-      5: { icon: 'mdi:crown-circle', gradient: 'from-cyan-400 to-blue-600', emoji: '👑' }
+      1: { icon: 'mdi:star-circle', gradient: 'from-brand-gold to-brand-gold-deep', emoji: '⭐' },
+      2: { icon: 'mdi:crown', gradient: 'from-brand-emerald to-teal-500', emoji: '👑' }
     };
-    return configs[level] || configs[0];
+    return configs[level] || configs[1]; // Default level 1
   };
 
   const getVerificationStatus = () => {
     if (userData?.active) {
-      return { text: 'Verified Investor', color: 'text-[#F45D16]' };
+      return { text: 'Verified Investor', color: 'text-brand-gold' };
     }
     return { text: 'Unverified Investor', color: 'text-red-400' };
   };
 
-  const handleCloseWelcomePopup = () => {
-    setShowWelcomePopup(false);
-    setTimeout(() => {
-      setShowPromoPopup(true);
-    }, 300);
-  };
-
-  const handleClosePromoPopup = () => {
-    if (hidePopupChecked) {
-      const tenMinutesFromNow = new Date().getTime() + 10 * 60 * 1000;
-      localStorage.setItem('popupHiddenUntil', tenMinutesFromNow.toString());
-    }
-    setShowPromoPopup(false);
-    setHidePopupChecked(false);
-  };
-
-  const handleClaimReward = () => {
-    if (applicationData?.link_group) {
-      window.open(applicationData.link_group, '_blank');
+  // Fetch popup image from S3
+  const fetchPopupImage = async () => {
+    if (!applicationData?.popup) return;
+    
+    setPopupLoading(true);
+    try {
+      const res = await fetch(`/api/s3-image-server?key=${encodeURIComponent(applicationData.popup)}`);
+      const data = await res.json();
+      if (data?.url) {
+        setPopupImageUrl(data.url);
+        setShowPopup(true);
+      }
+    } catch (err) {
+      console.error('Error fetching popup image:', err);
+    } finally {
+      setPopupLoading(false);
     }
   };
 
-  const vipConfig = getVIPConfig(userData?.level || 0);
+  // Close popup
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
+  // Hide popup for 10 minutes
+  const handleHidePopup10Minutes = () => {
+    const tenMinutesFromNow = new Date().getTime() + 10 * 60 * 1000;
+    localStorage.setItem('popupHiddenUntil', tenMinutesFromNow.toString());
+    setShowPopup(false);
+  };
+
+  const vipConfig = getVIPConfig(userData?.level || 1);
+  const totalWallet = (userData?.balance || 0) + (userData?.income || 0);
+  const availableBalance = userData?.balance || 0;
+  const selectedProductAmount = selectedProduct?.amount || 0;
+  const balanceAfterSelected = availableBalance - selectedProductAmount;
+  const canPurchaseSelectedProduct = selectedProduct ? balanceAfterSelected >= 0 : false;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] pb-32 relative overflow-hidden">
+    <div className="min-h-screen bg-brand-black pb-32 relative overflow-hidden text-white">
       <Head>
-        <title>{applicationData?.name || 'Ciroos'} | Dashboard</title>
-        <meta name="description" content={`${applicationData?.name || 'Ciroos'} Dashboard`} />
+        <title>{applicationData?.name || 'Money Rich'} | Dashboard</title>
+        <meta name="description" content={`${applicationData?.name || 'Money Rich'} Dashboard`} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       {/* Background elements */}
-      <div className="stars"></div>
-      <div className="stars1"></div>
-      <div className="stars2"></div>
-      <div className="shooting-stars"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(100%_80%_at_85%_0%,rgba(0,88,188,0.3)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_100%,rgba(255,100,0,0.25)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),rgba(5,6,8,0.95))]"></div>
+        <div className="absolute -top-28 -left-24 w-[360px] h-[360px] bg-brand-gold/18 blur-[160px] rounded-full"></div>
+        <div className="absolute top-1/3 right-[-140px] w-[500px] h-[500px] bg-brand-gold-deep/14 blur-[200px] rounded-full"></div>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[420px] h-[420px] bg-brand-emerald/10 blur-[180px] rounded-full"></div>
+      </div>
 
-      <div className="max-w-sm mx-auto p-4 relative z-10">
-        {/* Header - Logo + VIP + Portfolio */}
-        <div className="flex items-center justify-between mb-6 pt-2">
-          <div className="w-32 h-auto relative">
-            <Image 
-              src="/logo_full.svg" 
-              alt="Logo" 
-              width={128} 
-              height={40}
-              className="drop-shadow-[0_0_10px_rgba(244,93,22,0.3)]"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                const fallback = e.target.nextSibling;
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-            <div className="hidden items-center gap-2" style={{ display: 'none' }}>
-              <Icon icon="mdi:alpha-c-circle" className="text-[#F45D16] w-8 h-8" />
-              <span className="text-white font-bold text-lg">{applicationData?.name || 'Ciroos AI'}</span>
-            </div>
-          </div>
-          
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pt-12 pb-32">
+        <section className="grid gap-5 lg:grid-cols-[1.6fr_1fr] mb-10">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-brand-surface to-brand-charcoal p-6 sm:p-8 shadow-[0_20px_60px_rgba(5,6,8,0.65)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),transparent)]"></div>
+            <div className="relative z-10 flex flex-col gap-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-brand-surface border border-white/10 flex items-center justify-center shadow-brand-glow">
+                    <Image 
+                      src="/logo.svg"
+                      alt="Money Rich Logo"
+                      width={56}
+                      height={56}
+                      priority
+                      className="object-contain"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-white/40">Money Rich</p>
+                    <h1 className="text-2xl font-semibold text-white leading-tight">
+                      {userData?.name ? `Halo, ${userData.name}` : 'Halo, Investor Money Rich'}
+                    </h1>
+                  </div>
+                </div>
           <div className="flex items-center gap-2">
-            {/* VIP Button - Small & Clean */}
             <button 
               onClick={() => router.push('/vip')}
-              className="relative group"
-            >
-              {/* Glow effect on hover */}
-              <div className={`absolute -inset-1 bg-gradient-to-r ${vipConfig.gradient} rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300`}></div>
-              
-              <div className={`relative flex items-center gap-2 bg-gradient-to-r ${vipConfig.gradient} px-3 py-2 rounded-xl transition-all duration-300 group-hover:scale-105 border border-white/20 shadow-lg`}>
-                <Icon icon={vipConfig.icon} className="w-4 h-4 text-white" />
-                <div className="flex items-center gap-1">
-                  <span className="text-white text-xs font-bold">VIP</span>
-                  <span className="text-white text-sm font-black">{userData?.level || 0}</span>
-                </div>
-              </div>
+                    className="inline-flex items-center gap-2 rounded-xl border border-brand-gold/40 bg-gradient-to-r from-brand-gold to-brand-gold-deep px-4 py-2.5 text-sm font-semibold text-brand-black shadow-brand-glow transition-transform duration-300 hover:-translate-y-0.5"
+                  >
+                    <Icon icon={vipConfig.icon} className="w-4 h-4" />
+                    VIP {userData?.level || 1}
             </button>
-
-            {/* Portfolio Button */}
             <button 
               onClick={() => router.push('/portofolio')}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#F45D16]/10 to-[#FF6B35]/10 hover:from-[#F45D16]/20 hover:to-[#FF6B35]/20 text-[#FAF8F6] px-3 py-2 rounded-xl transition-all duration-300 border border-[#F45D16]/30"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 hover:text-white transition-transform duration-300 hover:-translate-y-0.5"
             >
-              <Icon icon="mdi:chart-line" className="w-4 h-4 text-[#F45D16]" />
-              <span className="text-xs font-semibold">Portfolio</span>
+                    <Icon icon="mdi:chart-line" className="w-4 h-4" />
+                    Portofolio
             </button>
           </div>
         </div>
 
-        {/* User Card - New Design */}
-        <div className="relative mb-5">
-          {/* Glow Effect */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur opacity-20"></div>
-          
-          <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-5 border border-white/5">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F45D16] to-[#FF6B35] flex items-center justify-center shadow-lg">
-                  <Icon icon="mdi:account-circle" className="text-white w-8 h-8" />
-                </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="relative overflow-hidden rounded-3xl border border-brand-gold/25 bg-gradient-to-br from-brand-gold/12 via-brand-surface to-brand-surface-soft p-5 shadow-[0_18px_45px_rgba(5,6,8,0.45)]">
+                  <div className="absolute -top-16 -right-12 w-40 h-40 rounded-full bg-brand-gold/35 blur-3xl opacity-70"></div>
+                  <div className="relative z-10 flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-lg font-bold text-white mb-0.5">{userData?.name || 'Tester'}</h1>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-2 h-2 rounded-full ${userData?.active ? 'bg-[#F45D16]' : 'bg-red-400'} animate-pulse`}></div>
-                    <span className={`text-xs ${getVerificationStatus().color} font-medium`}>
-                      {getVerificationStatus().text}
-                    </span>
+                        <p className="text-[11px] uppercase tracking-[0.35em] text-brand-gold/80">Saldo Balance</p>
+                        <p className="text-2xl font-semibold text-white mt-1">{formatCurrency(userData?.balance || 0)}</p>
+                        <p className="text-[11px] text-white/55 mt-2">Dana siap pakai untuk membeli produk investasi.</p>
                   </div>
+            <button 
+                        onClick={() => router.push('/deposit')}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-semibold text-xs px-3 py-2 shadow-brand-glow transition-transform duration-300 hover:-translate-y-0.5"
+            >
+                        <Icon icon="mdi:wallet-plus" className="w-4 h-4" />
+                        Top Up
+            </button>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-white/50">
+                      <Icon icon="mdi:shield-check" className="w-3.5 h-3.5 text-brand-gold" />
+                      <span>Total dompet: {formatCurrency(totalWallet)}</span>
+                    </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                <Icon icon="mdi:shield-check" className="w-3.5 h-3.5 text-[#F45D16]" />
-                <span className="text-[10px] text-white/80 font-semibold">Secured</span>
+                <div className="relative overflow-hidden rounded-3xl border border-brand-emerald/25 bg-gradient-to-br from-brand-surface via-brand-charcoal to-brand-surface-soft p-5 shadow-[0_18px_45px_rgba(5,6,8,0.45)]">
+                  <div className="absolute -bottom-16 -left-20 w-44 h-44 rounded-full bg-brand-emerald/30 blur-3xl opacity-60"></div>
+                  <div className="relative z-10 flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.35em] text-brand-emerald/80">Saldo Income</p>
+                        <p className="text-2xl font-semibold text-white mt-1">{formatCurrency(userData?.income || 0)}</p>
+                        <p className="text-[11px] text-white/55 mt-2">Hasil investasi yang dapat dicairkan kapan saja.</p>
+                </div>
+                      <button
+                        onClick={() => router.push('/withdraw')}
+                        className="inline-flex items-center gap-2 rounded-xl border border-brand-emerald/40 bg-brand-emerald/15 text-brand-emerald font-semibold text-xs px-3 py-2 transition-transform duration-300 hover:-translate-y-0.5"
+                      >
+                        <Icon icon="mdi:cash-refund" className="w-4 h-4" />
+                        Tarik
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-white/50">
+                      <Icon icon="mdi:calendar-clock" className="w-3.5 h-3.5 text-brand-emerald" />
+                      <span>Pencairan cepat ke rekening terverifikasi.</span>
+                    </div>
+                  </div>
               </div>
             </div>
             
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-white/65 max-w-xl">
+                  {applicationData?.name || 'Money Rich'} memberikan akses ke strategi investasi terkurasi dengan dukungan concierge eksklusif untuk setiap member.
+                </p>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F45D16]/20 to-[#FF6B35]/20 flex items-center justify-center">
-                    <Icon icon="mdi:wallet" className="w-4 h-4 text-[#F45D16]" />
+                  <button
+                    onClick={() => router.push('/bonus-hub')}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 hover:text-white transition-colors"
+                  >
+                    <Icon icon="mdi:gift-open" className="w-4 h-4" />
+                    Lihat Bonus
+                  </button>
+                  <button
+                    onClick={() => router.push('/guide')}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 hover:text-white transition-colors"
+                  >
+                    <Icon icon="mdi:information-outline" className="w-4 h-4" />
+                    Panduan Cepat
+                  </button>
                   </div>
-                  <div>
-                    <p className="text-[9px] text-white/60 font-medium uppercase tracking-wide">Total Saldo</p>
-                    <p className="text-xl font-bold text-white">{formatCurrency(userData?.balance || 0)}</p>
-                  </div>
-                </div>
+              </div>
               </div>
             </div>
+            
+          <div className="relative overflow-hidden rounded-3xl border border-brand-gold/40 bg-brand-surface-soft/90 p-6 flex flex-col gap-5 shadow-[0_20px_50px_rgba(5,6,8,0.55)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(232,193,82,0.22),transparent)]"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+                  <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-brand-gold/80 mb-1">Snapshot</p>
+                <h2 className="text-xl font-semibold text-white">Akun Eksklusif</h2>
+                  </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gold/15 border border-brand-gold/30 text-brand-gold">
+                  <Icon icon={vipConfig.icon} className="w-5 h-5" />
+                </div>
+                  <div>
+                  <p className="text-xs uppercase text-white/50">Level VIP</p>
+                  <p className="text-sm font-semibold text-white">VIP {userData?.level || 0}</p>
+              </div>
+            </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-emerald/15 border border-brand-emerald/30 text-brand-emerald">
+                  <Icon icon="mdi:shield-check" className="w-5 h-5" />
           </div>
+                <div>
+                  <p className="text-xs uppercase text-white/50">Keamanan</p>
+                  <p className="text-sm text-white/80">Akun dilindungi enkripsi multi-layer & approval manual.</p>
         </div>
+          </div>
+              <button
+                onClick={() => router.push('/vip')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-semibold py-3"
+              >
+                <Icon icon="mdi:rocket-launch" className="w-4 h-4" />
+                Upgrade VIP
+              </button>
+              <button
+                onClick={() => router.push('/deposit')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-white/80 hover:text-white py-3 transition-colors"
+              >
+                <Icon icon="mdi:wallet-plus" className="w-4 h-4" />
+                Deposit Dana
+              </button>
+        </div>
+          </div>
+        </section>
 
         {/* Loading spinner */}
         {loading && (
           <div className="flex flex-col items-center justify-center my-12">
             <div className="relative">
-              <div className="animate-spin rounded-full h-12 w-12 border-3 border-[#F45D16]/20 border-t-[#F45D16]"></div>
-              <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-[#F45D16]/40"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-3 border-brand-gold/20 border-t-brand-gold"></div>
+              <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-brand-gold/30"></div>
             </div>
             <p className="text-white/70 text-center mt-4 text-sm">Memuat produk investasi...</p>
           </div>
@@ -340,7 +464,7 @@ export default function Dashboard() {
         {!loading && !error && (
           <>
             {Object.keys(products).length === 0 ? (
-              <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 text-center">
+              <div className="bg-brand-surface border border-white/10 rounded-2xl p-6 text-center">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Icon icon="mdi:information-outline" className="text-white/60 w-6 h-6" />
                   <h3 className="text-white font-semibold">Produk Tidak Tersedia</h3>
@@ -350,12 +474,12 @@ export default function Dashboard() {
             ) : (
               <>
                 <div className="flex items-center gap-2 mb-4">
-                  <Icon icon="mdi:rocket-launch" className="text-[#F45D16] w-5 h-5" />
+                  <Icon icon="mdi:rocket-launch" className="text-brand-gold w-5 h-5" />
                   <h2 className="text-lg font-bold text-white">Produk Investasi</h2>
                 </div>
 
                 {/* Category Tabs */}
-                <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 mb-6 pb-2">
                   {(() => {
                     const categories = Object.keys(products);
                     const preferred = ['Monitor', 'Insight', 'Autopilot'];
@@ -371,120 +495,270 @@ export default function Dashboard() {
                         setSelectedCategory(categoryName);
                         setSelectedProduct(products[categoryName][0] || null);
                       }}
-                      className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap border ${
+                      className={`flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border ${
                         selectedCategory === categoryName
-                          ? 'bg-gradient-to-r from-[#F45D16] to-[#FF6B35] text-white border-transparent shadow-lg shadow-[#F45D16]/30'
+                          ? 'bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black border-transparent shadow-brand-glow'
                           : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border-white/10'
                       }`}
                     >
                       <Icon icon={getCategoryIcon(categoryName)} className="w-5 h-5" />
-                      {categoryName}
+                      <span className="whitespace-nowrap">{categoryName}</span>
                     </button>
                   ))}
                 </div>
 
                 {/* Product Cards in Selected Category */}
                 {products[selectedCategory] && products[selectedCategory].length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 mb-5">
-                    {products[selectedCategory].map((product) => (
+                  <>
+                    {selectedProduct && (
+                      <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-brand-surface-soft/95 backdrop-blur-xl p-6 sm:p-8 mb-8 shadow-[0_25px_60px_rgba(5,6,8,0.55)]">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),transparent)]"></div>
+                        <div className="relative z-10 flex flex-col gap-6">
+                          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                            <div className="flex flex-col gap-3">
+                              <span className="inline-flex items-center gap-2 rounded-full border border-brand-gold/30 bg-brand-gold/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.35em] text-brand-gold">
+                                {selectedCategory}
+                              </span>
+                              <h3 className="text-3xl font-black text-white">
+                                {selectedProduct.name}
+                              </h3>
+                              <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
+                                {selectedProduct.description || 'Produk premium Money Rich dengan penyeimbangan risiko yang telah dikurasi oleh analis internal kami.'}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 min-w-[220px] text-sm">
+                              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                <p className="text-[10px] uppercase tracking-wide text-white/45">Nominal</p>
+                                <p className="text-lg font-semibold text-white mt-1">{formatCurrency(selectedProduct.amount)}</p>
+                              </div>
+                              <div className="rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-4">
+                                <p className="text-[10px] uppercase tracking-wide text-brand-gold/80">Profit Harian</p>
+                                <p className="text-lg font-semibold text-brand-gold mt-1">{formatCurrency(selectedProduct.daily_profit)}</p>
+                              </div>
+                              <div className="rounded-2xl border border-brand-emerald/30 bg-brand-emerald/10 p-4">
+                                <p className="text-[10px] uppercase tracking-wide text-brand-emerald/80">Durasi</p>
+                                <p className="text-lg font-semibold text-brand-emerald mt-1">{selectedProduct.duration} hari</p>
+                              </div>
+                              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                <p className="text-[10px] uppercase tracking-wide text-white/50">ROI Siklus</p>
+                                <p className="text-lg font-semibold text-white mt-1">{formatPercentage(calculateROI(selectedProduct))}%</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="rounded-2xl border border-brand-gold/35 bg-brand-gold/10 p-4">
+                              <p className="text-[11px] uppercase tracking-wide text-brand-gold/70">Profit Siklus</p>
+                              <p className="text-xl font-semibold text-white mt-1">{formatCurrency(calculateTotalReturn(selectedProduct))}</p>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                              <p className="text-[11px] uppercase tracking-wide text-white/55">Proyeksi Pencairan</p>
+                              <p className="text-xl font-semibold text-white mt-1">{formatCurrency(calculateTotalReturn(selectedProduct))}</p>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                              <p className="text-[11px] uppercase tracking-wide text-white/55">Status Produk</p>
+                              <p className={`text-sm font-semibold mt-1 ${selectedProduct.status === 'Active' ? 'text-brand-emerald' : 'text-red-400'}`}>
+                                {selectedProduct.status === 'Active' ? 'Aktif' : 'Tidak Aktif'}
+                              </p>
+                              {selectedProduct.required_vip > 0 && (
+                                <p className="text-[11px] text-white/50 mt-1 flex items-center gap-1">
+                                  <Icon icon="mdi:crown" className="w-4 h-4 text-brand-gold" />
+                                  VIP {selectedProduct.required_vip} diperlukan
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 rounded-2xl border border-white/10 bg-brand-surface/70 p-4">
+                            <div className="space-y-1 text-sm">
+                              <p className="text-white/65">
+                                Saldo balance tersedia: <span className="text-white font-semibold">{formatCurrency(availableBalance)}</span>
+                              </p>
+                              <p className={`${canPurchaseSelectedProduct ? 'text-brand-emerald' : 'text-red-300'} text-[13px] font-semibold`}>
+                                {canPurchaseSelectedProduct
+                                  ? `Sisa saldo setelah beli: ${formatCurrency(balanceAfterSelected)}`
+                                  : `Saldo kurang ${formatCurrency(Math.abs(balanceAfterSelected))}`}
+                              </p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <button
+                                onClick={() => router.push('/deposit')}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs font-semibold text-white/70 hover:text-white transition-colors"
+                              >
+                                <Icon icon="mdi:wallet-plus" className="w-4 h-4" />
+                                Deposit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!selectedProduct) return;
+                                  if (!canPurchaseSelectedProduct) {
+                                    router.push('/deposit');
+                                    return;
+                                  }
+                                  if (selectedProduct.status !== 'Active' || (userData?.level || 0) < (selectedProduct.required_vip || 0)) {
+                                    return;
+                                  }
+                                  setShowModal(true);
+                                }}
+                                disabled={!canPurchaseSelectedProduct || selectedProduct.status !== 'Active' || (userData?.level || 0) < (selectedProduct.required_vip || 0)}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-semibold px-4 py-3 text-xs shadow-brand-glow transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                              >
+                                <Icon icon="mdi:rocket-launch" className="w-4 h-4" />
+                                Beli dengan Saldo
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
+                      {products[selectedCategory].map((product) => {
+                        const isSelected = selectedProduct?.id === product.id;
+                        const productProfit = calculateTotalReturn(product);
+                        const productRoi = calculateROI(product);
+                        const projectedPayout = calculateTotalReturn(product);
+                        const meetsVip = (userData?.level || 0) >= (product.required_vip || 0);
+                        const canPurchase = availableBalance >= (product.amount || 0);
+                        const remaining = availableBalance - (product.amount || 0);
+                        const statusActive = product.status === 'Active';
+                        const buttonLabel = !statusActive
+                          ? 'Tidak Tersedia'
+                          : !meetsVip
+                            ? `Butuh VIP ${product.required_vip}`
+                            : canPurchase
+                              ? 'Beli dengan Saldo'
+                              : 'Top Up Saldo';
+
+                        return (
                       <div 
                         key={product.id}
                         onClick={() => setSelectedProduct(product)}
-                        className={`
-                          relative cursor-pointer transition-all duration-300
-                          ${selectedProduct?.id === product.id ? 'scale-[1.02]' : 'hover:scale-[1.01]'}
-                        `}
-                      >
-                        {selectedProduct?.id === product.id && (
-                          <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] to-[#FF6B35] rounded-3xl blur-lg opacity-30"></div>
-                        )}
-                        
-                        <div className={`
-                          relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-4 border transition-all duration-300
-                          ${selectedProduct?.id === product.id 
-                            ? 'border-[#F45D16]/50 shadow-lg shadow-[#F45D16]/20' 
-                            : 'border-white/10 hover:border-white/20'
-                          }
-                        `}>
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F45D16] to-[#FF6B35] flex items-center justify-center shadow-lg">
+                            className={`relative group cursor-pointer transition-all duration-300 ${isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'}`}
+                          >
+                            {isSelected && (
+                              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-brand-gold to-brand-gold-deep blur-xl opacity-30"></div>
+                            )}
+                            <div
+                              className={`relative h-full rounded-3xl border p-5 flex flex-col gap-4 transition-all duration-300 ${
+                                isSelected
+                                  ? 'border-brand-gold/45 bg-gradient-to-br from-brand-surface to-brand-charcoal shadow-brand-glow'
+                                  : 'border-white/10 bg-gradient-to-br from-brand-surface to-brand-surface-soft hover:border-white/20'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex flex-col gap-2">
+                                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-white/60">
+                                    {product.category?.name || selectedCategory}
+                                  </span>
+                                  <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+                                  <p className="text-xs text-white/55">Investasi {formatCurrency(product.amount)}</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-gold to-brand-gold-deep flex items-center justify-center shadow-[0_0_25px_rgba(232,193,82,0.25)]">
                                 <Icon icon={getProductIcon(product.name)} className="text-white w-5 h-5" />
                               </div>
-                              <div>
-                                <h3 className="text-base font-bold text-white">{product.name}</h3>
-                                <p className="text-xs text-white/60">{formatCurrency(product.amount)}</p>
+                                  <span className={`px-3 py-1 rounded-lg text-[10px] font-semibold border ${statusActive ? 'border-brand-emerald/30 text-brand-emerald bg-brand-emerald/10' : 'border-red-400/40 text-red-300 bg-red-500/10'}`}>
+                                    {statusActive ? 'Aktif' : 'Nonaktif'}
+                                  </span>
                               </div>
                             </div>
                             
-                            {/* VIP Badge */}
-                            {product.required_vip > 0 && (
-                              <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg px-2 py-1 flex items-center gap-1">
-                                <Icon icon="mdi:crown" className="w-3 h-3 text-yellow-400" />
-                                <span className="text-[10px] font-bold text-yellow-300">VIP {product.required_vip}</span>
+                              <div className="grid grid-cols-2 gap-3 text-xs text-white/70">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                                  <p className="text-[10px] uppercase text-white/45">Profit Harian</p>
+                                  <p className="text-sm font-semibold text-brand-gold mt-1">{formatCurrency(product.daily_profit)}</p>
                               </div>
-                            )}
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                                  <p className="text-[10px] uppercase text-white/45">Durasi</p>
+                                  <p className="text-sm font-semibold text-brand-emerald mt-1">{product.duration} hari</p>
                           </div>
-                          
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            <div className="bg-white/5 rounded-lg p-2 border border-white/10">
-                              <p className="text-[9px] text-white/60 font-medium mb-0.5 uppercase">Profit</p>
-                              <p className="text-sm font-bold text-[#F45D16]">{formatCurrency(product.daily_profit)}</p>
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                                  <p className="text-[10px] uppercase text-white/45">Profit Siklus</p>
+                                  <p className="text-sm font-semibold text-white mt-1">{formatCurrency(productProfit)}</p>
                             </div>
-                            <div className="bg-white/5 rounded-lg p-2 border border-white/10">
-                              <p className="text-[9px] text-white/60 font-medium mb-0.5 uppercase">Durasi</p>
-                              <p className="text-sm font-bold text-[#0058BC]">{product.duration} hari</p>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-gradient-to-r from-[#F45D16]/10 to-[#0058BC]/10 rounded-xl p-3 border border-white/10">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-white/70 font-medium">Total Return</span>
-                              <span className="text-base font-bold text-white">{formatCurrency(calculateTotalReturn(product))}</span>
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                                  <p className="text-[10px] uppercase text-white/45">ROI Siklus</p>
+                                  <p className="text-sm font-semibold text-white mt-1">{formatPercentage(productRoi)}%</p>
                             </div>
                           </div>
                           
-                          {/* Purchase Limit Badge */}
+                              <div className="rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-3 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-white/70">Proyeksi Pencairan</span>
+                                <span className="text-sm font-semibold text-white">{formatCurrency(projectedPayout)}</span>
+                          </div>
+                          
                           {product.purchase_limit > 0 && (
-                            <div className="mt-3 flex items-center justify-center gap-1.5 bg-orange-500/10 border border-orange-500/30 rounded-lg py-1.5 px-3">
-                              <Icon icon="mdi:alert-circle" className="w-3.5 h-3.5 text-orange-400" />
-                              <span className="text-[10px] font-semibold text-orange-300">
-                                Limited: {product.purchase_limit}x pembelian
-                              </span>
+                                <div className="flex items-center gap-1.5 rounded-xl border border-brand-gold/40 bg-brand-gold/10 py-1.5 px-3 text-[10px] font-semibold text-brand-gold">
+                                  <Icon icon="mdi:alert-circle" className="w-3.5 h-3.5" />
+                                  <span>Limit {product.purchase_limit}x pembelian</span>
                             </div>
                           )}
                           
-                          {/* Buy Button per Product */}
+                              <div className="mt-auto flex flex-col gap-3">
+                                <div className="flex items-center justify-between text-[11px] text-white/55">
+                                  <span className="flex items-center gap-2">
+                                    <Icon icon="mdi:wallet" className="w-4 h-4 text-white/45" />
+                                    {canPurchase
+                                      ? `Sisa saldo: ${formatCurrency(Math.max(remaining, 0))}`
+                                      : `Saldo kurang ${formatCurrency(Math.abs(remaining))}`}
+                                  </span>
+                                  {selectedProduct?.id === product.id && (
+                                    <span className="inline-flex items-center gap-1 text-brand-gold font-semibold">
+                                      <Icon icon="mdi:check-decagram" className="w-4 h-4" />
+                                      Dipilih
+                                    </span>
+                                  )}
+                                </div>
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedProduct(product);
+                                    if (!statusActive) return;
+                                    if (!meetsVip) {
+                                      router.push('/vip');
+                                      return;
+                                    }
+                                    if (canPurchase) {
                               setShowModal(true);
-                            }}
-                            disabled={
-                              product.status !== 'Active' || 
-                              (userData?.level || 0) < product.required_vip
-                            }
-                            className="mt-3 w-full bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16] disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-[#F45D16]/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
-                          >
-                            {(userData?.level || 0) < product.required_vip ? (
-                              <>
-                                <Icon icon="mdi:lock" className="w-4 h-4" />
-                                <span className="text-xs">Butuh VIP {product.required_vip}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Icon icon="mdi:cart" className="w-4 h-4" />
-                                <span className="text-xs">Beli Sekarang</span>
-                              </>
-                            )}
+                                    } else {
+                                      router.push('/deposit');
+                                    }
+                                  }}
+                                  className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition-all duration-300 shadow-brand-glow ${
+                                    !statusActive
+                                      ? 'bg-brand-surface text-white/30 cursor-not-allowed'
+                                      : !meetsVip
+                                        ? 'bg-brand-surface text-white/60 hover:text-white border border-white/10'
+                                        : canPurchase
+                                          ? 'bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black hover:-translate-y-0.5'
+                                          : 'bg-brand-surface text-brand-gold border border-brand-gold/40 hover:-translate-y-0.5'
+                                  }`}
+                                >
+                                  <Icon
+                                    icon={
+                                      !statusActive
+                                        ? 'mdi:clock-alert'
+                                        : !meetsVip
+                                          ? 'mdi:crown'
+                                          : canPurchase
+                                            ? 'mdi:cart'
+                                            : 'mdi:wallet-plus'
+                                    }
+                                    className="w-4 h-4"
+                                  />
+                                  {buttonLabel}
                           </button>
                         </div>
                       </div>
-                    ))}
                   </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 ) : (
-                  <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 text-center">
+                  <div className="bg-brand-surface border border-white/10 rounded-2xl p-6 text-center">
                     <Icon icon="mdi:package-variant" className="text-white/40 w-12 h-12 mx-auto mb-3" />
                     <p className="text-white/60 text-sm">Tidak ada produk di kategori {selectedCategory}</p>
                   </div>
@@ -493,318 +767,69 @@ export default function Dashboard() {
             )}
           </>
         )}
-
-        {/* Welcome Video Section */}
-        <div className="mt-8 mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon icon="mdi:play-circle" className="text-[#F45D16] w-5 h-5" />
-            <h2 className="text-lg font-bold text-white">Kenali Ciroos AI</h2>
-          </div>
-
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur-lg opacity-20"></div>
-            
-            <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-4 border border-white/10 overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#F45D16]/10 to-transparent rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#0058BC]/10 to-transparent rounded-full blur-2xl"></div>
-              
-              <div className="relative">
-                <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 bg-black shadow-2xl">
-                  <video 
-                    className="w-full aspect-video object-cover"
-                    controls
-                    preload="metadata"
-                    poster="/ciroos_video_thumbnail.png"
-                  >
-                    <source src="/ciroos_welcome_video.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 pointer-events-none"></div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F45D16]/20 to-[#FF6B35]/20 flex items-center justify-center border border-[#F45D16]/30">
-                      <Icon icon="mdi:information" className="w-4 h-4 text-[#F45D16]" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-white">Video Pengenalan</p>
-                      <p className="text-[10px] text-white/60">Pelajari cara kerja Ciroos AI</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
-                    <Icon icon="mdi:clock-outline" className="w-3 h-3 text-white/60" />
-                    <span className="text-[10px] text-white/70 font-medium">1:10</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         
         {/* Copyright */}
-        <div className="text-center text-white/40 text-[10px] flex items-center justify-center gap-1.5 mt-8">
-          <Icon icon="mdi:copyright" className="w-3 h-3" />
-          <span>2025 {applicationData?.company || 'Ciroos, Inc'}. All Rights Reserved.</span>
-        </div>
+        <Copyright />
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/80 backdrop-blur-xl border-t border-white/10 z-50">
-        <div className="max-w-sm mx-auto">
+      {/* Bottom Navigation - Floating */}
           <BottomNavbar />
-        </div>
-      </div>
 
-      {/* Welcome Popup Modal */}
-      {showWelcomePopup && (
+      {/* Popup Modal */}
+      {showPopup && applicationData?.popup && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="relative max-w-sm w-full animate-slideUp">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur-xl opacity-30"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-emerald rounded-3xl blur-xl opacity-30"></div>
             
-            <div className="relative bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[#F45D16]/20 to-transparent rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-[#0058BC]/20 to-transparent rounded-full blur-3xl"></div>
+            <div className="relative bg-gradient-to-br from-brand-surface via-brand-charcoal to-brand-surface rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-brand-gold/18 to-transparent rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-brand-emerald/16 to-transparent rounded-full blur-3xl"></div>
               
               <button
-                onClick={handleCloseWelcomePopup}
-                className="absolute top-4 right-4 z-10 bg-red-500/90 hover:bg-red-600 backdrop-blur-sm text-white rounded-full w-9 h-9 flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110"
+                onClick={handleClosePopup}
+                className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full w-9 h-9 flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110 border border-white/20"
               >
                 <Icon icon="mdi:close" className="w-5 h-5" />
               </button>
               
               <div className="relative p-6">
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-[#F45D16]/30 blur-xl rounded-full"></div>
-                    <Image 
-                      src="/logo_full.svg" 
-                      alt="Ciroos AI Logo" 
-                      width={140} 
-                      height={44}
-                      className="relative drop-shadow-[0_0_20px_rgba(244,93,22,0.6)]"
+                {/* Popup Image */}
+                {popupImageUrl && (
+                  <div className="relative w-full aspect-video mb-6 rounded-2xl overflow-hidden border border-white/10">
+                    <Image
+                      src={popupImageUrl}
+                      alt="Popup"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
-                </div>
-
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 bg-[#F45D16] rounded-full animate-pulse"></div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                      Selamat Datang, {userData?.name || 'Investor'}!
-                    </h2>
-                    <div className="w-2 h-2 bg-[#0058BC] rounded-full animate-pulse"></div>
-                  </div>
-                  <p className="text-white/60 text-sm">Platform investasi AI terpercaya</p>
-                </div>
+                )}
                 
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 mb-5">
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F45D16]/20 to-[#FF6B35]/20 flex items-center justify-center mx-auto mb-2 border border-[#F45D16]/30">
-                        <Icon icon="mdi:shield-check" className="w-5 h-5 text-[#F45D16]" />
-                      </div>
-                      <p className="text-[10px] text-white/70 font-medium">Aman</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0058BC]/20 to-[#F45D16]/20 flex items-center justify-center mx-auto mb-2 border border-[#0058BC]/30">
-                        <Icon icon="mdi:lightning-bolt" className="w-5 h-5 text-[#0058BC]" />
-                      </div>
-                      <p className="text-[10px] text-white/70 font-medium">Cepat</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center mx-auto mb-2 border border-green-500/30">
-                        <Icon icon="mdi:trophy" className="w-5 h-5 text-green-400" />
-                      </div>
-                      <p className="text-[10px] text-white/70 font-medium">Profit</p>
-                    </div>
+                {/* Popup Title/Message */}
+                {applicationData?.popup_title && (
+                  <div className="text-center mb-6">
+                    <p className="text-white text-base leading-relaxed">
+                      {applicationData.popup_title}
+                    </p>
                   </div>
-                  
-                  <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4"></div>
-                  
-                  <p className="text-white/70 text-xs text-center leading-relaxed">
-                    Bergabunglah dengan komunitas kami untuk mendapatkan update terbaru dan dukungan 24/7
-                  </p>
-                </div>
+                )}
 
+                {/* Action Buttons */}
                 <div className="space-y-3">
                   <button
-                    onClick={() => {
-                      if (applicationData?.link_group) {
-                        window.open(applicationData.link_group, '_blank');
-                      }
-                    }}
-                    className="w-full bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#0077bb] hover:to-[#0088cc] text-white font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-[#0088cc]/50 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <Icon icon="mdi:telegram" className="w-5 h-5" />
-                    <span>Gabung Saluran Telegram</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      if (applicationData?.link_cs) {
-                        window.open(applicationData.link_cs, '_blank');
-                      }
-                    }}
-                    className="w-full bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#0077bb] hover:to-[#0088cc] text-white font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-[#0088cc]/50 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <Icon icon="mdi:telegram" className="w-5 h-5" />
-                    <span>Hubungi Layanan Bantuan</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Promo Popup Modal */}
-      {showPromoPopup && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="relative max-w-sm w-full animate-slideUp">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur-xl opacity-30"></div>
-            
-            <div className="relative bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[#F45D16]/20 to-transparent rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-[#0058BC]/20 to-transparent rounded-full blur-3xl"></div>
-
-              <button
-                onClick={handleClosePromoPopup}
-                className="absolute top-4 right-4 z-10 bg-red-500/90 hover:bg-red-600 backdrop-blur-sm text-white rounded-full w-9 h-9 flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110"
-              >
-                <Icon icon="mdi:close" className="w-5 h-5" />
-              </button>
-              
-              <div className="relative p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
-                <div className="relative text-center mb-4">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Icon icon="mdi:crown" className="w-6 h-6 text-yellow-300 animate-pulse" />
-                    <h3 className="text-white text-2xl font-extrabold tracking-wide bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">PROMO SPESIAL</h3>
-                    <Icon icon="mdi:crown" className="w-6 h-6 text-yellow-300 animate-pulse" />
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" 
-                        fill="url(#tiktok-gradient)"/>
-                        <defs>
-                          <linearGradient id="tiktok-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style={{ stopColor: '#00f2ea' }} />
-                            <stop offset="100%" style={{ stopColor: '#ff0050' }} />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                    </div>
-                    
-                    <div className="text-white font-bold text-lg">&</div>
-                    
-                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-white text-center mb-2">Raih Hadiah Fantastis!</h3>
-                <p className="text-sm text-white/70 text-center mb-4 leading-relaxed px-2">
-                  Buat konten promosi Ciroos AI di TikTok & YouTube, raih views, dan claim hadiahnya!
-                </p>
-
-                <div className="space-y-3 mb-4">
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-blue-500/30">
-                    <div className="flex items-center gap-3">
-                      <Icon icon="mdi:eye" className="w-5 h-5 text-blue-400" />
-                      <span className="font-semibold text-white">20K views</span>
-                    </div>
-                    <span className="font-bold text-blue-400 text-lg">Rp 100K</span>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-purple-500/30">
-                    <div className="flex items-center gap-3">
-                      <Icon icon="mdi:eye" className="w-5 h-5 text-purple-400" />
-                      <span className="font-semibold text-white">50K views</span>
-                    </div>
-                    <span className="font-bold text-purple-400 text-lg">Rp 300K</span>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-green-500/30">
-                    <div className="flex items-center gap-3">
-                      <Icon icon="mdi:eye" className="w-5 h-5 text-green-400" />
-                      <span className="font-semibold text-white">100K views</span>
-                    </div>
-                    <span className="font-bold text-green-400 text-lg">Rp 700K</span>
-                  </div>
-		  <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-orange-500/30">
-                    <div className="flex items-center gap-3">
-                      <Icon icon="mdi:fire" className="w-5 h-5 text-orange-400" />
-                      <span className="font-semibold text-white">250K views</span>
-                    </div>
-                    <span className="font-bold text-orange-400 text-lg">Rp 1JT</span>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-red-500/30">
-                    <div className="flex items-center gap-3">
-                      <Icon icon="mdi:fire" className="w-5 h-5 text-red-400" />
-                      <span className="font-semibold text-white">500K views</span>
-                    </div>
-                    <span className="font-bold text-red-400 text-lg">Rp 2JT</span>
-                  </div>
-                </div>
-
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon icon="mdi:information" className="w-5 h-5 text-[#F45D16]" />
-                    <h4 className="font-bold text-white">Syarat & Ketentuan</h4>
-                  </div>
-                  <ul className="space-y-2 text-sm text-white/70 leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <Icon icon="mdi:check-circle" className="w-4 h-4 text-[#F45D16] flex-shrink-0 mt-1" />
-                      <span>Video original berkualitas HD, tanpa re-upload.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon icon="mdi:check-circle" className="w-4 h-4 text-[#F45D16] flex-shrink-0 mt-1" />
-                      <span>Dilarang menggunakan BOT atau fake views.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon icon="mdi:check-circle" className="w-4 h-4 text-[#F45D16] flex-shrink-0 mt-1" />
-                      <span>Wajib mencantumkan link referral di bio/deskripsi.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon icon="mdi:check-circle" className="w-4 h-4 text-[#F45D16] flex-shrink-0 mt-1" />
-                      <span>Hadiah akan ditambahkan langsung ke saldo akun.</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="space-y-2">
-                  <button
-                    onClick={handleClaimReward}
-                    className="w-full bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16] text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[#F45D16]/50 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
-                  >
-                    <Icon icon="mdi:gift" className="w-5 h-5" />
-                    <span>Klaim Hadiah Sekarang</span>
-                  </button>
-
-                  <button
-                    onClick={handleClosePromoPopup}
+                    onClick={handleHidePopup10Minutes}
                     className="w-full bg-white/5 hover:bg-white/10 text-white/80 font-semibold py-3 rounded-xl transition-all duration-300 border border-white/10"
                   >
-                    Nanti Saja
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 mt-4 justify-center">
-                  <input
-                    type="checkbox"
-                    id="hidePromoPopup"
-                    checked={hidePopupChecked}
-                    onChange={(e) => setHidePopupChecked(e.target.checked)}
-                    className="w-4 h-4 rounded border-white/30 bg-white/5 text-[#F45D16] focus:ring-[#F45D16] focus:ring-offset-0"
-                  />
-                  <label htmlFor="hidePromoPopup" className="text-xs text-white/50">
                     Jangan tampilkan selama 10 menit
-                  </label>
+                  </button>
+                  
+                  <button
+                    onClick={handleClosePopup}
+                    className="w-full bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-bold py-3.5 rounded-xl transition-all duration-300 shadow-brand-glow hover:-translate-y-0.5 active:scale-[0.99]"
+                  >
+                    Tutup
+                  </button>
                 </div>
               </div>
             </div>
@@ -819,14 +844,11 @@ export default function Dashboard() {
           onClose={() => setShowModal(false)}
           product={selectedProduct}
           user={userData}
-          onSuccess={(paymentData) => {
+          onSuccess={() => {
             setShowModal(false);
-            setSelectedProduct(null);
-            setToast({ open: true, message: 'Investasi berhasil! Silakan lakukan pembayaran.', type: 'success' });
-            router.push({
-              pathname: '/payment',
-              query: { data: encodeURIComponent(JSON.stringify(paymentData)) }
-            });
+            refreshUserData();
+            fetchProducts();
+            setToast({ open: true, message: 'Investasi berhasil dibeli menggunakan saldo balance.', type: 'success' });
           }}
         />
       )}
@@ -837,9 +859,9 @@ export default function Dashboard() {
         onClose={() => setToast({ ...toast, open: false })}
       />
       
+      {/* eslint-disable react/no-unknown-property */}
       <style jsx global>{`
         .stars {
-          z-index: 0;
           width: 1px;
           height: 1px;
           border-radius: 50%;
@@ -952,6 +974,7 @@ export default function Dashboard() {
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
++      {/* eslint-enable react/no-unknown-property */}
     </div>
   );
 }

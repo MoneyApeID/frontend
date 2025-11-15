@@ -320,6 +320,40 @@ export const createInvestment = async (payload) => {
   });
 };
 
+// Create deposit request
+export const createDeposit = async (payload) => {
+  return apiRequest('/users/deposits', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+// Get deposit history
+export const getDepositHistory = async ({ limit = 10, page = 1 } = {}) => {
+  let query = `?limit=${encodeURIComponent(limit)}&page=${encodeURIComponent(page)}`;
+  return apiRequest(`/users/deposits${query}`, { method: 'GET' });
+};
+
+// Get tutorials
+export const getTutorials = async () => {
+  return apiRequest('/users/tutorials', { method: 'GET' });
+};
+
+// Get binary structure
+export const getBinaryStructure = async () => {
+  return apiRequest('/users/binary/structure', { method: 'GET' });
+};
+
+// Get binary omset
+export const getBinaryOmset = async () => {
+  return apiRequest('/users/binary/omset', { method: 'GET' });
+};
+
+// Get rewards
+export const getRewards = async () => {
+  return apiRequest('/users/rewards', { method: 'GET' });
+};
+
 export const registerUser = async (userData) => {
   try {
     const response = await fetch(`${BASE_URL}/register`, {

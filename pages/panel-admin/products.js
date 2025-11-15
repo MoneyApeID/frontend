@@ -410,7 +410,6 @@ export default function ProductManagement() {
                       onChange={(e) => setEditForm({...editForm, amount: e.target.value})}
                       className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                       min="0"
-                      step="1000"
                       placeholder="50000"
                       required
                     />
@@ -424,7 +423,6 @@ export default function ProductManagement() {
                       onChange={(e) => setEditForm({...editForm, daily_profit: e.target.value})}
                       className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                       min="0"
-                      step="1000"
                       placeholder="15000"
                       required
                     />
@@ -494,12 +492,9 @@ export default function ProductManagement() {
                       <p className="text-gray-400 text-sm mb-2">
                         Investasi: {formatCurrency(Number(editForm.amount))}
                       </p>
-                      <p className="text-gray-400 text-sm mb-2">
-                        Profit: {formatCurrency(Number(editForm.daily_profit) * Number(editForm.duration))}
-                      </p>
                       <div className="h-px bg-white/10 my-3"></div>
                       <div className="text-green-400 font-bold text-2xl">
-                        {formatCurrency(Number(editForm.amount) + (Number(editForm.daily_profit) * Number(editForm.duration)))}
+                      {formatCurrency(Number(editForm.daily_profit) * Number(editForm.duration))}
                       </div>
                       <p className="text-gray-500 text-xs mt-1">Total yang diterima user</p>
                     </div>

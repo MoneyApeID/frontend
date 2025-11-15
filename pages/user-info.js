@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Head from 'next/head';
 import { useUser } from '../contexts/UserContext';
 import withAuth from '../utils/withAuth';
+import Copyright from '../components/copyright';
 
 function UserInfoPage() {
   const { user, loading, error, refreshUser } = useUser();
@@ -53,6 +54,8 @@ function UserInfoPage() {
           Refresh Now
         </button>
       </div>
+
+      <Copyright />
 
       <style jsx>{`
         .container {

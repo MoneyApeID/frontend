@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Icon } from '@iconify/react';
-import { ArrowLeft } from 'lucide-react';
 import BottomNavbar from '../components/BottomNavbar';
+import Copyright from '../components/copyright';
 
 export default function VIPPage() {
   const router = useRouter();
@@ -12,27 +12,30 @@ export default function VIPPage() {
   const [applicationData, setApplicationData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Hanya 2 level: Level 1 (default) dan Level 2 (minimal 10K investasi)
   const VIP_THRESHOLDS = {
-    1: 50000,
-    2: 1200000,
-    3: 7000000,
-    4: 30000000,
-    5: 150000000
+    1: 0,        // Level 1 adalah default untuk user baru
+    2: 10000,    // Minimal 10K investasi untuk naik ke Level 2
   };
 
   const VIP_BENEFITS = {
-    0: ['Akses produk Monitor', 'Investasi tanpa batas'],
-    1: ['✨ Unlock Insight 1', 'Profit langsung 140%', 'Semua benefit VIP 0'],
-    2: ['✨ Unlock Insight 2', 'Profit langsung 210%', 'Semua benefit VIP 1'],
-    3: ['✨ Unlock Insight 3', '🚀 Unlock ALL AutoPilot', 'Profit hingga 235%', 'Semua benefit VIP 2'],
-    4: ['✨ Unlock Insight 4', 'Profit langsung 280%', 'Semua benefit VIP 3'],
-    5: ['✨ Unlock Insight 5', 'SEMUA produk tersedia', 'VIP ULTIMATE 👑', 'Maximum benefits!']
+    1: [
+      'Akses produk VIP 1',
+      'Investasi tanpa batas di produk VIP 1',
+      'Profit sesuai produk yang dipilih'
+    ],
+    2: [
+      'Semua benefit VIP 1',
+      'Akses produk semua produk VIP',
+      'Investasi tanpa batas di semua produk tersedia',
+    ]
   };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const token = sessionStorage.getItem('token');
-    if (!token) {
+    const accessExpire = sessionStorage.getItem('access_expire');
+    if (!token || !accessExpire) {
       router.push('/login');
       return;
     }
@@ -40,17 +43,18 @@ export default function VIPPage() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const app = JSON.parse(localStorage.getItem('application') || '{}');
     
+    // Default level adalah 1 untuk user baru
     setUserData({
       name: user.name || 'User',
-      level: user.level || 0,
+      level: user.level || 1,  // Default level 1
       total_invest_vip: user.total_invest_vip || 0,
       total_invest: user.total_invest || 0,
       balance: user.balance || 0
     });
     
     setApplicationData({
-      name: app.name || 'Ciroos AI',
-      company: app.company || 'Ciroos, Inc'
+      name: app.name || 'Money Rich',
+      company: app.company || 'Money Rich Holdings'
     });
     
     setLoading(false);
@@ -58,14 +62,22 @@ export default function VIPPage() {
 
   const getVIPProgress = () => {
     const totalVIP = userData?.total_invest_vip || 0;
-    const currentLevel = userData?.level || 0;
+    const currentLevel = userData?.level || 1;
     const nextLevel = currentLevel + 1;
     
-    if (nextLevel > 5) {
-      return { current: currentLevel, next: null, progress: 100, remaining: 0, nextThreshold: 0 };
+    // Jika sudah level 2 (maksimal), tidak ada next level
+    if (currentLevel >= 2) {
+      return { 
+        current: currentLevel, 
+        next: null, 
+        progress: 100, 
+        remaining: 0, 
+        nextThreshold: 0 
+      };
     }
     
-    const nextThreshold = VIP_THRESHOLDS[nextLevel];
+    // Progress ke Level 2
+    const nextThreshold = VIP_THRESHOLDS[2];
     const progress = (totalVIP / nextThreshold) * 100;
     const remaining = nextThreshold - totalVIP;
     
@@ -83,156 +95,131 @@ export default function VIPPage() {
       style: 'currency', 
       currency: 'IDR', 
       maximumFractionDigits: 0 
-    }).format(amount);
+    }).format(amount || 0);
   };
 
   const getVIPConfig = (level) => {
     const configs = {
-      0: { 
-        gradient: 'from-gray-500 to-slate-600', 
-        text: 'text-gray-400', 
-        border: 'border-gray-500/30',
-        icon: 'mdi:shield-account',
-        bgGlow: 'bg-gray-500/20',
-        name: 'Basic',
-        emoji: '🎯'
-      },
       1: { 
-        gradient: 'from-yellow-700 to-orange-700', 
-        text: 'text-yellow-600', 
-        border: 'border-yellow-500/30',
+        gradient: 'from-brand-gold to-brand-gold-deep', 
+        text: 'text-brand-gold', 
+        border: 'border-brand-gold/30',
         icon: 'mdi:star-circle',
-        bgGlow: 'bg-yellow-500/20',
-        name: 'Bronze',
-        emoji: '⭐'
+        bgGlow: 'bg-brand-gold/20',
+        name: 'Level 1',
+        emoji: '⭐',
+        description: 'Akses produk VIP 1'
       },
       2: { 
-        gradient: 'from-gray-400 to-gray-600', 
-        text: 'text-gray-300', 
-        border: 'border-gray-400/30',
-        icon: 'mdi:medal',
-        bgGlow: 'bg-gray-400/20',
-        name: 'Silver',
-        emoji: '🥈'
-      },
-      3: { 
-        gradient: 'from-yellow-400 to-orange-500', 
-        text: 'text-yellow-400', 
-        border: 'border-yellow-400/30',
-        icon: 'mdi:trophy-variant',
-        bgGlow: 'bg-yellow-400/20',
-        name: 'Gold',
-        emoji: '🏆'
-      },
-      4: { 
-        gradient: 'from-blue-400 to-purple-600', 
-        text: 'text-blue-300', 
-        border: 'border-blue-400/30',
-        icon: 'mdi:diamond-stone',
-        bgGlow: 'bg-blue-400/20',
-        name: 'Platinum',
-        emoji: '💎'
-      },
-      5: { 
-        gradient: 'from-cyan-400 to-blue-600', 
-        text: 'text-cyan-300', 
-        border: 'border-cyan-400/30',
-        icon: 'mdi:crown-circle',
-        bgGlow: 'bg-cyan-400/20',
-        name: 'Ultimate',
-        emoji: '👑'
+        gradient: 'from-brand-emerald to-teal-500', 
+        text: 'text-brand-emerald', 
+        border: 'border-brand-emerald/30',
+        icon: 'mdi:crown',
+        bgGlow: 'bg-brand-emerald/20',
+        name: 'Level 2',
+        emoji: '👑',
+        description: 'Akses semua produk VIP'
       }
     };
-    return configs[level] || configs[0];
-  };
-
-  const getVIPStars = (level) => {
-    return '⭐'.repeat(level || 0);
+    return configs[level] || configs[1];
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-3 border-[#F45D16]/20 border-t-[#F45D16]"></div>
+      <div className="min-h-screen bg-brand-black flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),rgba(5,6,8,0.95))]"></div>
+          <div className="absolute -top-32 -left-24 w-[360px] h-[360px] bg-brand-gold/18 blur-[160px] rounded-full"></div>
+        </div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-brand-gold/20 border-t-brand-gold"></div>
+          <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-brand-gold/40"></div>
+        </div>
       </div>
     );
   }
 
   const vipProgress = getVIPProgress();
-  const currentLevel = userData?.level || 0;
+  const currentLevel = userData?.level || 1;
   const currentConfig = getVIPConfig(currentLevel);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] pb-32 relative overflow-hidden">
+    <div className="min-h-screen bg-brand-black text-white relative overflow-hidden pb-24">
       <Head>
-        <title>{applicationData?.name || 'Ciroos AI'} | VIP Status</title>
+        <title>{applicationData?.name || 'Money Rich'} | VIP Status</title>
         <meta name="description" content="VIP Membership Status" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       {/* Background elements */}
-      <div className="stars"></div>
-      <div className="stars1"></div>
-      <div className="stars2"></div>
-      <div className="shooting-stars"></div>
-
-      <div className="absolute inset-0 bg-[radial-gradient(100%_80%_at_85%_0%,rgba(0,88,188,0.3)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_100%,rgba(255,100,0,0.25)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),rgba(5,6,8,0.95))]"></div>
+        <div className="absolute -top-32 -left-24 w-[360px] h-[360px] bg-brand-gold/18 blur-[160px] rounded-full"></div>
+        <div className="absolute bottom-0 right-0 w-[460px] h-[460px] bg-brand-gold-deep/12 blur-[220px] rounded-full"></div>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[420px] h-[420px] bg-brand-emerald/12 blur-[200px] rounded-full"></div>
+      </div>
 
       {/* Top Navigation */}
-      <div className="sticky top-0 z-20 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center">
+      <div className="sticky top-0 z-20 bg-brand-black/80 backdrop-blur-xl border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center">
           <button 
             onClick={() => router.back()}
-            className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center bg-brand-surface hover:bg-brand-surface-soft rounded-xl transition-all duration-300 border border-white/10"
           >
-            <ArrowLeft size={24} />
+            <Icon icon="mdi:arrow-left" className="w-5 h-5 text-white" />
           </button>
-          <div className="flex items-center gap-3 mx-auto">
-            <Icon icon="mdi:crown" className="w-6 h-6 text-yellow-400 animate-pulse" />
-            <h1 className="text-lg font-bold text-white">VIP Status</h1>
-          </div>
-          <div className="w-10"></div>
+          <div className="flex-1"></div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 relative z-10">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-8 pb-24">
+        {/* Hero Header Section */}
+        <div className="mb-10 flex flex-col gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-gold/30 bg-brand-gold/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-brand-gold w-fit">
+            <Icon icon="mdi:crown" className="w-4 h-4" />
+            VIP Status
+          </div>
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black text-white">
+              Status VIP Anda
+            </h1>
+            <p className="text-sm text-white/60 max-w-2xl mt-2">
+              Pantau level VIP Anda dan akses produk eksklusif. Naik level dengan berinvestasi minimal 10K untuk membuka produk VIP 2 dan 3.
+            </p>
+        </div>
+      </div>
+
         {/* Current VIP Level - Hero Card */}
-        <div className="relative mb-6 mt-2">
-          <div className={`absolute -inset-1 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl blur-xl opacity-30 animate-pulse`}></div>
+        <div className="relative mb-8">
+          <div className={`absolute -inset-1 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl blur-xl opacity-30`}></div>
           
-          <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-8 border border-white/10">
+          <div className="relative bg-brand-surface-soft/90 rounded-3xl p-8 border border-white/10 shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
             <div className="text-center mb-6">
-              <div className={`inline-flex items-center gap-4 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl px-8 py-5 shadow-2xl border border-white/20`}>
+              <div className={`inline-flex items-center gap-4 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl px-8 py-6 shadow-2xl border border-white/20`}>
                 <div className="relative">
                   <div className={`absolute inset-0 ${currentConfig.bgGlow} blur-xl rounded-full animate-pulse`}></div>
-                  <Icon icon={currentConfig.icon} className="w-14 h-14 text-white drop-shadow-2xl relative z-10" />
+                  <Icon icon={currentConfig.icon} className="w-16 h-16 text-white drop-shadow-2xl relative z-10" />
                 </div>
                 <div className="text-left">
-                  <p className="text-white/90 text-xs font-medium uppercase tracking-wide">Level Anda</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-white text-3xl font-bold">VIP</p>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-1 border border-white/30">
-                      <p className="text-white text-3xl font-black">{currentLevel}</p>
+                  <p className="text-white/90 text-xs font-semibold uppercase tracking-wide mb-1">Level VIP Anda</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white text-4xl font-black">VIP</p>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl px-5 py-2 border border-white/30">
+                      <p className="text-white text-4xl font-black">{currentLevel}</p>
                     </div>
                   </div>
-                  <p className="text-white/70 text-xs mt-1 font-medium">{currentConfig.name}</p>
+                  <p className="text-white/80 text-sm mt-2 font-semibold">{currentConfig.name}</p>
+                  <p className="text-white/70 text-xs mt-1">{currentConfig.description}</p>
                 </div>
               </div>
-              {currentLevel > 0 && (
-                <div className="flex items-center justify-center gap-1 mt-4">
-                  <span className="text-2xl">{currentConfig.emoji}</span>
-                  <span className="text-xl">{getVIPStars(currentLevel)}</span>
-                </div>
-              )}
             </div>
 
             {vipProgress.next ? (
               <>
-                <div className="bg-white/5 rounded-2xl p-4 mb-4 border border-white/10">
-                  <div className="flex items-center justify-between text-sm text-white/70 mb-3">
-                    <span className="font-medium">Progress ke VIP {vipProgress.next}</span>
-                    <span className={`font-bold ${getVIPConfig(vipProgress.next).text}`}>
+                <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-5 mb-5">
+                  <div className="flex items-center justify-between text-sm mb-3">
+                    <span className="text-white/70 font-semibold">Progress ke VIP {vipProgress.next}</span>
+                    <span className={`font-black ${getVIPConfig(vipProgress.next).text}`}>
                       {vipProgress.progress.toFixed(1)}%
                     </span>
                   </div>
@@ -244,110 +231,132 @@ export default function VIPPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gradient-to-br from-[#F45D16]/10 to-[#FF6B35]/10 rounded-xl p-4 border border-[#F45D16]/20">
-                    <p className="text-[10px] text-white/60 font-medium mb-1 uppercase">Investasi VIP</p>
-                    <p className="text-white font-bold text-sm">{formatCurrency(userData?.total_invest_vip || 0)}</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-brand-gold-deep/5 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
+                        <Icon icon="mdi:currency-usd" className="text-brand-gold w-4 h-4" />
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Investasi VIP</p>
+                    </div>
+                    <p className="text-white font-black text-xl">{formatCurrency(userData?.total_invest_vip || 0)}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-xl p-4 border border-yellow-500/20">
-                    <p className="text-[10px] text-white/60 font-medium mb-1 uppercase">Butuh Lagi</p>
-                    <p className="text-yellow-400 font-bold text-sm">{formatCurrency(vipProgress.remaining)}</p>
+                  <div className="rounded-2xl border border-brand-emerald/30 bg-gradient-to-br from-brand-emerald/10 to-brand-emerald/5 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-brand-emerald/20 border border-brand-emerald/30 flex items-center justify-center">
+                        <Icon icon="mdi:target" className="text-brand-emerald w-4 h-4" />
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Butuh Lagi</p>
+                  </div>
+                    <p className="text-brand-emerald font-black text-xl">{formatCurrency(vipProgress.remaining)}</p>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-2xl p-6 border border-yellow-500/20 text-center">
-                <Icon icon="mdi:trophy" className="w-16 h-16 text-yellow-400 mx-auto mb-3 animate-bounce" />
-                <p className="text-yellow-300 font-bold text-lg mb-2">VIP Level Maksimal! 👑</p>
-                <p className="text-white/70 text-sm">Anda telah mencapai level VIP tertinggi</p>
+              <div className="rounded-2xl border border-brand-emerald/30 bg-gradient-to-r from-brand-emerald/10 to-brand-emerald/5 p-6 text-center">
+                <Icon icon="mdi:trophy" className="w-16 h-16 text-brand-emerald mx-auto mb-3 animate-bounce" />
+                <p className="text-brand-emerald font-black text-xl mb-2">VIP Level Maksimal! 👑</p>
+                <p className="text-white/70 text-sm">Anda telah mencapai level VIP tertinggi. Semua produk tersedia untuk Anda.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* VIP Benefits Timeline */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon icon="mdi:format-list-bulleted" className="text-[#F45D16] w-5 h-5" />
-            <h2 className="text-lg font-bold text-white">Benefit Setiap Level</h2>
+        {/* VIP Levels Timeline */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
+              <Icon icon="mdi:format-list-bulleted" className="text-brand-gold w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-black text-white">Benefit Setiap Level</h2>
           </div>
 
           <div className="space-y-4">
-            {[0, 1, 2, 3, 4, 5].map((level) => {
+            {[1, 2].map((level) => {
               const isUnlocked = currentLevel >= level;
               const isCurrent = currentLevel === level;
-              const threshold = VIP_THRESHOLDS[level] || 0;
+              const threshold = VIP_THRESHOLDS[level];
               const config = getVIPConfig(level);
 
               return (
                 <div 
                   key={level}
-                  className={`relative ${isCurrent ? 'scale-105' : ''} transition-all duration-300`}
+                  className={`relative ${isCurrent ? 'scale-[1.02]' : ''} transition-all duration-300`}
                 >
                   {isCurrent && (
                     <div className={`absolute -inset-1 bg-gradient-to-r ${config.gradient} rounded-3xl blur-lg opacity-40`}></div>
                   )}
                   
                   <div className={`
-                    relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-5 border transition-all duration-300
+                    relative bg-brand-surface-soft/90 rounded-3xl p-6 border transition-all duration-300 shadow-[0_20px_60px_rgba(5,6,8,0.6)]
                     ${isCurrent ? `${config.border} border-2 shadow-xl` : 'border-white/10'}
                     ${!isUnlocked && !isCurrent ? 'opacity-60' : ''}
                   `}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
                         <div className="relative">
                           {isCurrent && (
                             <div className={`absolute inset-0 ${config.bgGlow} blur-lg rounded-2xl animate-pulse`}></div>
                           )}
-                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center shadow-lg border border-white/20`}>
-                            <Icon icon={config.icon} className="w-7 h-7 text-white mb-0.5" />
-                            <span className="text-white text-sm font-black">{level}</span>
+                          <div className={`relative w-20 h-20 rounded-2xl bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center shadow-lg border border-white/20`}>
+                            <Icon icon={config.icon} className="w-8 h-8 text-white mb-1" />
+                            <span className="text-white text-lg font-black">{level}</span>
                           </div>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className={`text-xl font-bold ${config.text}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className={`text-2xl font-black ${config.text}`}>
                               VIP {level}
                             </h3>
-                            <span className="text-lg">{config.emoji}</span>
+                            <span className="text-xl">{config.emoji}</span>
                           </div>
-                          <p className="text-white/50 text-xs font-medium">{config.name}</p>
+                          <p className="text-white/60 text-sm font-semibold">{config.name}</p>
                           {threshold > 0 && (
-                            <p className="text-white/60 text-xs font-medium mt-0.5">
-                              {formatCurrency(threshold)}
+                            <p className="text-white/70 text-sm font-bold mt-1">
+                              Minimal investasi: {formatCurrency(threshold)}
+                            </p>
+                          )}
+                          {threshold === 0 && (
+                            <p className="text-brand-gold text-sm font-bold mt-1">
+                              Level default untuk user baru
                             </p>
                           )}
                         </div>
                       </div>
 
                       {isCurrent && (
-                        <div className="bg-green-500/20 border border-green-500/40 rounded-full px-3 py-1">
-                          <span className="text-green-300 text-xs font-bold">Level Saat Ini</span>
+                        <div className="bg-brand-emerald/20 border border-brand-emerald/40 rounded-full px-4 py-2">
+                          <span className="text-brand-emerald text-xs font-black">Level Saat Ini</span>
+                        </div>
+                      )}
+                      {!isUnlocked && (
+                        <div className="bg-brand-gold/20 border border-brand-gold/40 rounded-full px-4 py-2">
+                          <span className="text-brand-gold text-xs font-black">Terkunci</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Icon icon="mdi:gift" className="w-4 h-4 text-[#F45D16]" />
-                        <p className="text-white/70 text-xs font-semibold">Benefits:</p>
+                    <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon icon="mdi:gift" className="w-5 h-5 text-brand-gold" />
+                        <p className="text-white font-semibold text-sm">Benefits:</p>
                       </div>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {VIP_BENEFITS[level].map((benefit, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs text-white/80">
-                            <span className={`text-sm flex-shrink-0 ${isUnlocked ? 'text-green-400' : 'text-white/30'}`}>
+                          <li key={idx} className="flex items-start gap-3 text-sm text-white/80">
+                            <span className={`text-base flex-shrink-0 mt-0.5 ${isUnlocked ? 'text-brand-emerald' : 'text-white/30'}`}>
                               {isUnlocked ? '✓' : '○'}
                             </span>
-                            <span>{benefit}</span>
+                            <span className="flex-1">{benefit}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
                     {!isUnlocked && threshold > 0 && (
-                      <div className="mt-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2 text-center">
-                        <p className="text-yellow-300 text-xs font-semibold">
-                          🎯 Target: {formatCurrency(threshold)}
+                      <div className="mt-4 rounded-xl border border-brand-gold/30 bg-brand-gold/10 p-3 text-center">
+                        <p className="text-brand-gold text-sm font-black">
+                          🎯 Target: {formatCurrency(threshold)} untuk membuka level ini
                         </p>
                       </div>
                     )}
@@ -359,200 +368,84 @@ export default function VIPPage() {
         </div>
 
         {/* How to Upgrade */}
-        <div className="relative mb-6">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur opacity-20"></div>
+        <div className="relative mb-8">
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold/30 to-brand-emerald/30 rounded-3xl blur-xl opacity-30"></div>
           
-          <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-6 border border-white/10">
-            <div className="flex items-center gap-2 mb-4">
-              <Icon icon="mdi:information" className="text-[#F45D16] w-6 h-6" />
-              <h3 className="text-white font-bold text-lg">Cara Naik Level VIP</h3>
+          <div className="relative bg-brand-surface-soft/90 rounded-3xl p-6 border border-white/10 shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
+                <Icon icon="mdi:information" className="text-brand-gold w-6 h-6" />
+              </div>
+              <h3 className="text-white font-black text-xl">Cara Naik Level VIP</h3>
             </div>
 
-            <div className="space-y-3 mb-5">
-              <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl p-3">
-                <Icon icon="mdi:check-circle" className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+            <div className="space-y-4 mb-6">
+              <div className="rounded-2xl border border-brand-emerald/30 bg-gradient-to-br from-brand-emerald/10 to-brand-emerald/5 p-4">
+                <div className="flex items-start gap-3">
+                  <Icon icon="mdi:check-circle" className="w-6 h-6 text-brand-emerald flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-green-200 font-semibold text-sm mb-1">Investasi di Produk Monitor</p>
-                  <p className="text-green-300/70 text-xs">Produk dengan profit terkunci yang menambah level VIP Anda</p>
+                    <p className="text-brand-emerald font-black text-sm mb-1">Investasi Minimal 10K</p>
+                    <p className="text-white/70 text-xs leading-relaxed">
+                      Untuk naik ke Level 2, Anda perlu berinvestasi minimal Rp 10.000. Setelah mencapai target, Anda akan otomatis naik level dan mendapatkan akses ke produk Level 2 dan 3.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-                <Icon icon="mdi:close-circle" className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-4">
+                <div className="flex items-start gap-3">
+                  <Icon icon="mdi:lightbulb" className="w-6 h-6 text-brand-gold flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-red-200 font-semibold text-sm mb-1">Insight & AutoPilot</p>
-                  <p className="text-red-300/70 text-xs">Produk ini TIDAK menambah level VIP (profit langsung)</p>
+                    <p className="text-white font-semibold text-sm mb-1">Info Penting</p>
+                    <p className="text-white/70 text-xs leading-relaxed">
+                      User baru otomatis berada di Level 1 dan dapat mengakses produk Level 1. Investasi di semua produk akan dihitung untuk progress naik level.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 mb-4">
-              <p className="text-white/70 text-xs leading-relaxed">
-                <Icon icon="mdi:lightbulb" className="inline w-4 h-4 text-yellow-400 mr-1" />
-                <span className="font-semibold text-white">Tips:</span> Investasi Monitor memberikan return total saat selesai DAN menaikkan level VIP Anda. Semakin tinggi level, semakin banyak produk eksklusif yang terbuka!
-              </p>
             </div>
 
             <button
               onClick={() => router.push('/dashboard')}
-              className="w-full bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16] text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-[#F45D16]/30 hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-brand-gold to-brand-gold-deep hover:from-brand-gold-deep hover:to-brand-gold text-brand-black font-black py-4 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-brand-gold/30 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Icon icon="mdi:monitor-dashboard" className="w-5 h-5" />
-              Lihat Produk Monitor
+              <Icon icon="mdi:rocket" className="w-5 h-5" />
+              Lihat Produk Investasi
               <Icon icon="mdi:arrow-right" className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-[#1A1A1A] rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon icon="mdi:chart-line" className="text-[#F45D16] w-5 h-5" />
-              <span className="text-white/70 text-xs font-medium">Total Investasi</span>
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
+                <Icon icon="mdi:chart-line" className="text-brand-gold w-5 h-5" />
+              </div>
+              <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Total Investasi</p>
             </div>
-            <p className="text-white font-bold text-lg">{formatCurrency(userData?.total_invest || 0)}</p>
+            <p className="text-white font-black text-2xl">{formatCurrency(userData?.total_invest || 0)}</p>
           </div>
 
-          <div className="bg-[#1A1A1A] rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon icon="mdi:crown" className="text-yellow-400 w-5 h-5" />
-              <span className="text-white/70 text-xs font-medium">Investasi VIP</span>
+          <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-emerald/20 border border-brand-emerald/30 flex items-center justify-center">
+                <Icon icon="mdi:crown" className="text-brand-emerald w-5 h-5" />
+              </div>
+              <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Investasi VIP</p>
             </div>
-            <p className="text-yellow-400 font-bold text-lg">{formatCurrency(userData?.total_invest_vip || 0)}</p>
+            <p className="text-brand-emerald font-black text-2xl">{formatCurrency(userData?.total_invest_vip || 0)}</p>
+            </div>
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="text-center text-white/40 text-xs flex items-center justify-center gap-1.5 mt-8">
-          <Icon icon="mdi:copyright" className="w-3 h-3" />
-          <span>2025 {applicationData?.company || 'Ciroos, Inc'}. All Rights Reserved.</span>
-        </div>
-      </div>
+      <Copyright />
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/80 backdrop-blur-xl border-t border-white/10 z-50">
-        <div className="max-w-sm mx-auto">
+      {/* Bottom Navigation - Floating */}
           <BottomNavbar />
-        </div>
-      </div>
 
-      <style jsx global>{`
-        .stars {
-  z-index: 10;
-  width: 1px;
-  height: 1px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 718px 1689px #FFF , 1405px 2127px #FFF , 1270px 1148px #FFF , 620px 641px #FFF , 1538px 708px #FFF , 2169px 1632px #FFF , 523px 1494px #FFF , 1081px 2018px #FFF , 1372px 585px #FFF , 974px 576px #FFF , 448px 1231px #FFF , 78px 2055px #FFF , 1180px 1274px #FFF , 1752px 2099px #FFF , 1392px 488px #FFF , 1836px 2303px #FFF , 1309px 816px #FFF , 922px 962px #FFF , 1165px 2485px #FFF , 2054px 176px #FFF , 1425px 747px #FFF , 2253px 2056px #FFF , 1602px 114px #FFF , 433px 1332px #FFF , 65px 1726px #FFF , 257px 334px #FFF , 1512px 1855px #FFF , 775px 2422px #FFF , 2512px 2123px #FFF , 76px 2235px #FFF , 1979px 501px #FFF , 352px 1222px #FFF , 554px 1215px #FFF , 1200px 2163px #FFF , 2078px 1983px #FFF , 2461px 557px #FFF , 1960px 2055px #FFF , 1966px 316px #FFF , 1123px 1402px #FFF , 1461px 2288px #FFF , 1625px 2076px #FFF , 822px 609px #FFF , 531px 1358px #FFF , 900px 1938px #FFF , 1867px 1362px #FFF , 1049px 372px #FFF , 319px 980px #FFF , 2321px 2421px #FFF , 1701px 1425px #FFF , 1827px 1324px #FFF , 126px 1121px #FFF , 527px 1735px #FFF;
-  animation: animStar 100s linear infinite;
-}
-.stars:after {
-  content: " ";
-  top: -600px;
-  width: 1px;
-  height: 1px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 1229px 1419px #FFF , 672px 2257px #FFF , 821px 854px #FFF , 731px 1239px #FFF , 1244px 58px #FFF , 687px 2428px #FFF , 173px 1549px #FFF , 1973px 940px #FFF , 2334px 1057px #FFF , 792px 882px #FFF , 1499px 1912px #FFF , 1892px 9px #FFF , 172px 1753px #FFF , 22px 1577px #FFF , 934px 2059px #FFF , 1398px 2309px #FFF , 100px 77px #FFF , 1545px 22px #FFF , 595px 1917px #FFF , 941px 1452px #FFF , 1226px 1022px #FFF , 1254px 990px #FFF , 2507px 352px #FFF , 111px 887px #FFF , 1666px 168px #FFF , 966px 986px #FFF , 121px 2559px #FFF , 1424px 792px #FFF , 1973px 2544px #FFF , 577px 503px #FFF , 1167px 1107px #FFF , 2397px 1653px #FFF , 1054px 810px #FFF , 663px 805px #FFF , 1084px 317px #FFF , 2214px 759px #FFF , 190px 975px #FFF , 2218px 2104px #FFF , 2013px 1227px #FFF , 383px 1778px #FFF , 1287px 1660px #FFF , 2131px 994px #FFF , 1073px 748px #FFF , 1745px 2372px #FFF , 1424px 252px #FFF , 1274px 2457px #FFF , 1976px 2422px #FFF , 1644px 1665px #FFF , 2372px 1772px #FFF , 1593px 580px #FFF , 894px 2361px #FFF , 31px 1802px #FFF , 1552px 1134px #FFF , 1477px 1847px #FFF , 1647px 2464px #FFF , 599px 510px #FFF , 2016px 226px #FFF , 1402px 243px #FFF , 748px 953px #FFF , 387px 1212px #FFF , 453px 1525px #FFF , 1032px 93px #FFF , 1420px 1399px #FFF , 146px 948px #FFF , 2256px 1631px #FFF , 1405px 394px #FFF , 201px 2149px #FFF , 1077px 1765px #FFF , 34px 2213px #FFF , 2388px 246px #FFF , 392px 667px #FFF , 1595px 181px #FFF , 323px 426px #FFF , 2405px 2410px #FFF , 2484px 280px #FFF;
-}
-
-.stars1 {
-  z-index: 10;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 452px 2369px #FFF , 2030px 2013px #FFF , 113px 1775px #FFF , 426px 2228px #FFF , 735px 2395px #FFF , 483px 147px #FFF , 1123px 1666px #FFF , 1944px 113px #FFF , 1096px 372px #FFF , 2005px 118px #FFF , 1948px 2320px #FFF , 2095px 823px #FFF , 742px 1559px #FFF , 1637px 383px #FFF , 877px 992px #FFF , 141px 1522px #FFF , 483px 941px #FFF , 2028px 761px #FFF , 1164px 2482px #FFF , 692px 1202px #FFF , 1008px 62px #FFF , 1820px 2535px #FFF , 1459px 2067px #FFF , 519px 1297px #FFF , 1620px 252px #FFF , 1014px 1855px #FFF , 679px 135px #FFF , 1927px 2544px #FFF , 836px 1433px #FFF , 286px 21px #FFF , 1131px 769px #FFF , 1717px 1031px #FFF , 2121px 517px #FFF , 1865px 1257px #FFF , 1640px 1712px #FFF , 158px 162px #FFF , 2491px 1514px #FFF , 784px 1446px #FFF , 1547px 968px #FFF , 1966px 1461px #FFF , 923px 1883px #FFF , 601px 81px #FFF , 1486px 598px #FFF , 1947px 1462px #FFF , 2161px 1181px #FFF , 773px 675px #FFF , 2023px 455px #FFF , 1199px 1199px #FFF , 94px 1814px #FFF , 1055px 852px #FFF , 583px 631px #FFF , 150px 1931px #FFF , 1472px 597px #FFF , 611px 1338px #FFF , 54px 859px #FFF , 1266px 1019px #FFF , 1028px 256px #FFF , 1442px 964px #FFF , 436px 1325px #FFF , 2446px 1141px #FFF , 723px 70px #FFF , 825px 964px #FFF , 63px 271px #FFF , 647px 849px #FFF , 309px 673px #FFF , 1965px 2090px #FFF , 1672px 9px #FFF , 450px 2504px #FFF , 1675px 2135px #FFF , 2075px 921px #FFF , 1607px 2348px #FFF , 2243px 1494px #FFF;
-  animation: animStar 125s linear infinite;
-}
-.stars1:after {
-  content: " ";
-  top: -600px;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 435px 1410px #FFF , 1717px 2554px #FFF , 885px 1458px #FFF , 1614px 909px #FFF , 26px 2169px #FFF , 1627px 1343px #FFF , 511px 518px #FFF , 1388px 722px #FFF , 748px 1982px #FFF , 837px 2188px #FFF , 891px 1897px #FFF , 917px 2547px #FFF , 866px 2021px #FFF , 1748px 2464px #FFF , 409px 2476px #FFF , 1321px 1824px #FFF , 1946px 1620px #FFF , 84px 1996px #FFF , 773px 475px #FFF , 2327px 1356px #FFF , 181px 38px #FFF , 2122px 1291px #FFF , 2254px 375px #FFF , 654px 432px #FFF , 2022px 710px #FFF , 866px 1651px #FFF , 948px 2128px #FFF , 1107px 1282px #FFF , 1605px 1555px #FFF , 847px 2056px #FFF , 1678px 385px #FFF , 1723px 2282px #FFF , 516px 166px #FFF , 1764px 93px #FFF , 1947px 2302px #FFF , 1357px 1486px #FFF , 1237px 2532px #FFF , 2338px 2002px #FFF , 251px 1525px #FFF , 876px 1121px #FFF , 189px 759px #FFF , 1936px 1574px #FFF , 2510px 1440px #FFF , 204px 836px #FFF , 2044px 437px #FFF , 471px 45px #FFF , 394px 548px #FFF , 1730px 641px #FFF , 1526px 1701px #FFF , 1559px 1106px #FFF , 1396px 1826px #FFF , 1106px 644px #FFF , 160px 2149px #FFF , 1261px 1804px #FFF , 363px 714px #FFF , 2002px 2277px #FFF , 696px 1741px #FFF , 2291px 499px #FFF , 2089px 2229px #FFF;
-}
-
-.stars2 {
-  z-index: 10;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 380px 1043px #FFF , 10px 1086px #FFF , 660px 1062px #FFF , 1371px 842px #FFF , 1290px 2153px #FFF , 2258px 231px #FFF , 2130px 2217px #FFF , 1084px 758px #FFF , 1464px 1903px #FFF , 621px 2482px #FFF , 2470px 754px #FFF , 1282px 1797px #FFF , 510px 1678px #FFF , 836px 799px #FFF , 2001px 134px #FFF , 2314px 1869px #FFF , 1031px 643px #FFF , 949px 292px #FFF , 16px 2265px #FFF , 465px 1239px #FFF , 2117px 1952px #FFF , 1683px 605px #FFF , 1818px 1945px #FFF , 890px 1749px #FFF , 324px 110px #FFF , 1048px 1442px #FFF , 2399px 1553px #FFF , 157px 551px #FFF , 666px 314px #FFF , 897px 933px #FFF , 2397px 438px #FFF , 1280px 988px #FFF , 1510px 2373px #FFF , 2453px 1645px #FFF , 831px 994px #FFF , 2125px 338px #FFF , 1571px 2128px #FFF , 1792px 53px #FFF , 820px 2480px #FFF , 529px 1544px #FFF , 1941px 928px #FFF , 1632px 795px #FFF , 152px 993px #FFF , 1040px 260px #FFF , 1131px 589px #FFF , 2395px 1336px #FFF , 1537px 1906px #FFF , 1989px 1910px #FFF , 1489px 1098px #FFF , 996px 1585px #FFF , 476px 69px #FFF , 123px 466px #FFF , 374px 414px #FFF , 741px 1097px #FFF , 1415px 1296px #FFF , 945px 1132px #FFF , 909px 2080px #FFF , 2219px 8px #FFF , 2198px 1039px #FFF , 1794px 1513px #FFF , 1484px 1972px #FFF , 1557px 2099px #FFF , 1385px 912px #FFF , 1612px 1474px #FFF , 169px 1963px #FFF;
-  animation: animStar 175s linear infinite;
-}
-.stars2:after {
-  content: " ";
-  top: -600px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 148px 2112px #FFF , 2328px 2246px #FFF , 793px 1150px #FFF , 2476px 867px #FFF , 195px 2295px #FFF , 721px 1158px #FFF , 344px 1096px #FFF , 1434px 1247px #FFF , 2251px 1334px #FFF , 1696px 1404px #FFF , 1928px 1929px #FFF , 473px 1718px #FFF , 1176px 1364px #FFF , 133px 1990px #FFF , 1396px 1179px #FFF , 1355px 1046px #FFF , 676px 869px #FFF , 2255px 1676px #FFF , 2393px 2105px #FFF , 1032px 1390px #FFF , 773px 2159px #FFF , 1235px 945px #FFF , 1161px 209px #FFF , 1878px 175px #FFF , 287px 1787px #FFF , 509px 935px #FFF , 473px 442px #FFF , 1864px 177px #FFF , 768px 2004px #FFF , 513px 744px #FFF , 2060px 2271px #FFF , 2187px 2135px #FFF , 1818px 505px #FFF , 809px 1998px #FFF , 323px 2553px #FFF , 1420px 167px #FFF , 2418px 2233px #FFF , 1955px 2053px #FFF , 1822px 145px #FFF , 931px 629px #FFF , 94px 2440px #FFF , 1816px 718px #FFF , 386px 668px #FFF , 2040px 397px #FFF , 40px 866px #FFF , 1397px 2398px #FFF , 2399px 297px #FFF , 1611px 259px #FFF , 1393px 1139px #FFF;
-}
-
-.shooting-stars {
-  z-index: 1;
-  width: 5px;
-  height: 85px;
-  border-top-left-radius: 50%;
-  border-top-right-radius: 50%;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0), white);
-  animation: animShootingStar 10s linear infinite;
-}
-
-@keyframes animStar {
-  from {
-    transform: translateY(0px);
-  }
-  to {
-    transform: translateY(-2560px) translateX(-2560px);
-  }
-}
-@keyframes animShootingStar {
-  from {
-    transform: translateY(0px) translateX(0px) rotate(-45deg);
-    opacity: 1;
-    height: 5px;
-  }
-  to {
-    transform: translateY(-2560px) translateX(-2560px) rotate(-45deg);
-    opacity: 1;
-    height: 800px;
-  }
-}
-
-          /* Glassmorphism card matching Ciroos style */
-          .glassmorphism-card {
-            background: radial-gradient(94.23% 79.86% at 50% 31.48%, rgba(243, 250, 247, 0.02) 57%, rgba(243, 250, 247, 0.10) 91.5%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-          }
-
-          /* Input field styling */
-        .input-field {
-            background: rgba(243, 250, 247, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 0.75rem;
-            transition: all 0.3s;
-        }
-          
-        .input-field:focus-within {
-            border-color: #F45D16;
-            box-shadow: 0 0 0 3px rgba(244, 93, 22, 0.2);
-        }
-
+      <style>{`
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -563,18 +456,9 @@ export default function VIPPage() {
             to { transform: translateY(0); opacity: 1; }
           }
           
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-          }
-          
           .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
           .animate-slideUp { animation: slideUp 0.5s ease-out; }
-          .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
-
     </div>
   );
 }
-

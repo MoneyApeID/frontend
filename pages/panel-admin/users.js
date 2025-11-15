@@ -104,6 +104,12 @@ export default function UserManagement() {
     }
   };
 
+  const calculateTotalBalance = (balance, income) => {
+    const balanceNum = parseFloat(balance) || 0;
+    const incomeNum = parseFloat(income) || 0;
+    return balanceNum + incomeNum;
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
@@ -254,7 +260,7 @@ export default function UserManagement() {
                 <th className="py-4 px-6 text-left text-gray-300 font-medium">Status</th>
                 <th className="py-4 px-6 text-left text-gray-300 font-medium">Status Investasi</th>
                 <th className="py-4 px-6 text-left text-gray-300 font-medium">Bergabung</th>
-                <th className="py-4 px-6 text-left text-gray-300 font-medium">Saldo</th>
+                <th className="py-4 px-6 text-left text-gray-300 font-medium">Total Saldo</th>
                 <th className="py-4 px-6 text-left text-gray-300 font-medium">Total Investasi</th>
                 <th className="py-4 px-6 text-center text-gray-300 font-medium">Aksi</th>
               </tr>
@@ -305,7 +311,7 @@ export default function UserManagement() {
                   </td>
                   <td className="py-4 px-6">
                     <div className="text-white font-medium">
-                      Rp {user.balance.toLocaleString('id-ID')}
+                      Rp {calculateTotalBalance(user.balance, user.income).toLocaleString('id-ID')}
                     </div>
                   </td>
                   <td className="py-4 px-6">

@@ -1,17 +1,12 @@
-// pages/testimoni.js
+// pages/forum.js
 import React, { useState, useEffect } from 'react';
-// S3Image component to fetch signed URL from API
-// S3Image with modal popup
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Icon } from '@iconify/react';
 import { getForumTestimonials } from '../utils/api';
 import BottomNavbar from '../components/BottomNavbar';
 import Image from 'next/image';
-
-// S3 config from .env (replace with process.env.NEXT_PUBLIC_...)
-const S3_ENDPOINT = process.env.NEXT_PUBLIC_S3_ENDPOINT;
-const S3_BUCKET = process.env.NEXT_PUBLIC_S3_BUCKET;
+import Copyright from '../components/copyright';
 
 
 export default function Testimoni() {
@@ -22,8 +17,11 @@ export default function Testimoni() {
     const [modalImage, setModalImage] = useState(null); // url string
     const [applicationData, setApplicationData] = useState(null);
     const [page, setPage] = useState(1);
-    const [limit] = useState(20);
+    const [limit, setLimit] = useState(12);
+    const [showLimitDropdown, setShowLimitDropdown] = useState(false);
     const [totalTestimonials, setTotalTestimonials] = useState(0);
+    const [totalRewards, setTotalRewards] = useState(0);
+    const [viewMode, setViewMode] = useState('grid'); // grid or list
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -42,6 +40,10 @@ export default function Testimoni() {
                 setTestimonials(items);
                 const total = res.data?.total || res.data?.total_count || res.total || items.length;
                 setTotalTestimonials(typeof total === 'number' ? total : Number(total) || items.length);
+                
+                // Calculate total rewards
+                const rewards = items.reduce((sum, item) => sum + (item.reward || 0), 0);
+                setTotalRewards(rewards);
             } catch (err) {
                 setError(err.message || 'Gagal memuat testimoni');
             } finally {
@@ -54,16 +56,17 @@ export default function Testimoni() {
     try {
       const parsed = JSON.parse(storedApplication); 
       setApplicationData({
-        name: parsed.name || 'Ciroos AI',
+        name: parsed.name || 'Money Rich',
         healthy: parsed.healthy || false,
+        company: parsed.company || parsed.name || 'Money Rich Holdings',
       });
     } catch (e) {
-      setApplicationData({ name: 'Ciroos AI', healthy: false });
+      setApplicationData({ name: 'Money Rich', healthy: false, company: 'Money Rich Holdings' });
     }
   } else {
-    setApplicationData({ name: 'Ciroos AI', healthy: false });
+    setApplicationData({ name: 'Money Rich', healthy: false, company: 'Money Rich Holdings' });
   }
-    }, [page, limit]);
+    }, [page, limit, router]);
 
     const formatDate = (dateString) => {
         const d = new Date(dateString.replace(' ', 'T'));
@@ -89,16 +92,16 @@ export default function Testimoni() {
 
     // Modal overlay for image
     const ImageModal = ({ url, onClose }) => (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-black/95 backdrop-blur-md animate-fadeIn" onClick={onClose}>
           <div className="relative max-w-full max-h-full p-4" onClick={e => e.stopPropagation()}>
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur-xl opacity-50"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-gold-deep rounded-3xl blur-xl opacity-50"></div>
             <Image
               src={url}
               alt="Bukti Penarikan Besar"
               unoptimized
               width={500}
               height={500}
-              className="relative rounded-2xl shadow-2xl border-2 border-white/10 max-h-[80vh] w-auto bg-[#0A0A0A] object-contain animate-slideUp"
+              className="relative rounded-2xl shadow-2xl border-2 border-brand-gold/20 max-h-[80vh] w-auto bg-brand-charcoal object-contain animate-slideUp"
             />
             <button
               onClick={onClose}
@@ -112,267 +115,286 @@ export default function Testimoni() {
     );
 
     return (
-      <div className="min-h-screen bg-[#0A0A0A] pb-32 relative overflow-hidden">
+      <div className="min-h-screen bg-brand-black pb-32 relative overflow-hidden">
         <Head>
-          <title>{applicationData?.name || 'Ciroos AI'} | Testimoni</title>
-          <meta name="description" content={`${applicationData?.name || 'Ciroos AI'} Testimonials`} />
+          <title>{applicationData?.name || 'Money Rich'} | Testimoni</title>
+          <meta name="description" content={`${applicationData?.name || 'Money Rich'} Testimonials`} />
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
         {modalImage && <ImageModal url={modalImage} onClose={() => setModalImage(null)} />}
 
-        {/* Background elements */}
-        <div className="stars"></div>
-        <div className="stars1"></div>
-        <div className="stars2"></div>
-                        <div className="shooting-stars"></div>
-
-        <div className="absolute inset-0 bg-[radial-gradient(100%_80%_at_85%_0%,rgba(0,88,188,0.3)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_100%,rgba(255,100,0,0.25)_0%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0)_100%)]"></div>
+        {/* Background elements - matching referral/dashboard style */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),rgba(5,6,8,0.95))]"></div>
+          <div className="absolute -top-40 -left-32 w-[420px] h-[420px] rounded-full bg-brand-gold/20 blur-[180px] opacity-70"></div>
+          <div className="absolute bottom-20 right-[-140px] w-[520px] h-[520px] rounded-full bg-brand-gold-deep/15 blur-[220px] opacity-80"></div>
+          <div className="absolute bottom-[-120px] left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-brand-emerald/12 blur-[200px] opacity-70"></div>
+        </div>
 
         <div className="max-w-sm mx-auto p-4 relative z-10">
-          {/* Header Section */}
-          <div className="relative mb-6 pt-2">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur opacity-20"></div>
-            
-            <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-6 border border-white/10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F45D16] to-[#FF6B35] flex items-center justify-center shadow-lg">
-                  <Icon icon="mdi:comment-quote" className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white mb-0.5">Testimoni</h1>
-                  <p className="text-white/60 text-xs">Lihat pengalaman nyata dari member kami</p>
-                </div>
+          {/* Hero Header Section */}
+          <div className="relative mb-6 pt-4">
+            <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold via-brand-gold-deep to-brand-gold rounded-3xl blur-xl opacity-30"></div>
+            <div className="relative bg-gradient-to-br from-brand-surface via-brand-surface-soft to-brand-charcoal rounded-3xl p-6 border border-brand-gold/20 overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-emerald rounded-full blur-2xl"></div>
               </div>
               
-              <button 
-                onClick={() => router.push('/forum/upload')}
-                className="w-full relative group overflow-hidden"
-              >
-                {/* Glow Effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-                
-                {/* Main Button */}
-                <div className="relative bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16] rounded-2xl p-4 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#F45D16]/30 group-hover:scale-[1.02] active:scale-[0.98]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-                        <Icon icon="mdi:upload" className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300" />
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-gold to-brand-gold-deep flex items-center justify-center shadow-lg shadow-brand-gold/40 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <Icon icon="mdi:comment-quote" className="w-9 h-9 text-brand-black" />
                       </div>
-                      <div>
-                        <p className="text-[10px] text-white/80 font-semibold uppercase tracking-wide">Unggah Bukti</p>
-                        <p className="text-lg font-bold text-white">Penarikan</p>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-brand-emerald border-2 border-brand-black flex items-center justify-center">
+                        <Icon icon="mdi:check" className="w-3 h-3 text-brand-black" />
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-                        <Icon icon="mdi:arrow-right" className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-300" />
-                      </div>
+                    <div>
+                      <h1 className="text-2xl font-black text-white mb-1">Testimoni Member</h1>
+                      <p className="text-white/70 text-xs leading-relaxed">Bukti nyata keberhasilan investasi bersama Money Rich</p>
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
+                    : 'bg-brand-surface text-white/60 border border-white/10 hover:border-brand-gold/20'
+                }`}
+              >
+                <Icon icon="mdi:view-grid" className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
+                    : 'bg-brand-surface text-white/60 border border-white/10 hover:border-brand-gold/20'
+                }`}
+              >
+                <Icon icon="mdi:view-list" className="w-5 h-5" />
               </button>
             </div>
+            <div className="text-xs text-white/50">
+              Halaman {page} dari {Math.ceil(totalTestimonials / limit) || 1}
+            </div>
           </div>
 
-          {/* Testimonials List */}
-          <div className="space-y-4 mb-6">
-            {loading && (
-              <div className="flex flex-col items-center justify-center my-12">
-                <div className="relative">
-                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-[#F45D16]/20 border-t-[#F45D16]"></div>
-                  <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-[#F45D16]/40"></div>
-                </div>
-                <p className="text-white/70 text-center mt-4 text-sm">Memuat testimoni...</p>
+          {/* Testimonials Grid/List */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center my-12">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-3 border-brand-gold/20 border-t-brand-gold"></div>
+                <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-brand-gold/40"></div>
               </div>
-            )}
-            {error && !loading && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 text-center">
-                <Icon icon="mdi:alert-circle" className="text-red-400 w-8 h-8 mx-auto mb-2" />
-                <h3 className="text-white font-semibold">Terjadi Kesalahan</h3>
-                <p className="text-red-300 text-sm">{error}</p>
+              <p className="text-white/70 text-center mt-4 text-sm">Memuat testimoni...</p>
+            </div>
+          )}
+          {error && !loading && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 text-center mb-6">
+              <Icon icon="mdi:alert-circle" className="text-red-400 w-8 h-8 mx-auto mb-2" />
+              <h3 className="text-white font-semibold">Terjadi Kesalahan</h3>
+              <p className="text-red-300 text-sm">{error}</p>
+            </div>
+          )}
+          {!loading && !error && testimonials.length === 0 && (
+            <div className="bg-brand-surface border border-white/10 rounded-2xl p-8 text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center mx-auto mb-4">
+                <Icon icon="mdi:comment-off" className="w-8 h-8 text-brand-gold" />
               </div>
-            )}
-            {!loading && !error && testimonials.length === 0 && (
-              <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 text-center">
-                <Icon icon="mdi:comment-off" className="text-white/60 w-8 h-8 mx-auto mb-2" />
-                <h3 className="text-white font-semibold">Belum Ada Testimoni</h3>
-                <p className="text-white/60 text-sm">Jadilah yang pertama mengunggah testimoni!</p>
-              </div>
-            )}
-            {!loading && !error && testimonials.map((t) => (
-              <TestimonialCard key={t.id} t={t} setModalImage={setModalImage} formatCurrency={formatCurrency} />
-            ))}
-          </div>
+              <h3 className="text-white font-semibold text-lg mb-2">Belum Ada Testimoni</h3>
+              <p className="text-white/60 text-sm mb-4">Jadilah yang pertama mengunggah testimoni!</p>
+              <button
+                onClick={() => router.push('/forum/upload')}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-semibold px-4 py-2 text-sm shadow-brand-glow hover:scale-105 transition-transform"
+              >
+                <Icon icon="mdi:upload" className="w-4 h-4" />
+                Unggah Testimoni
+              </button>
+            </div>
+          )}
+          {!loading && !error && testimonials.length > 0 && (
+            <div className={viewMode === 'grid' 
+              ? 'grid grid-cols-2 gap-3 mb-6' 
+              : 'space-y-3 mb-6'
+            }>
+              {testimonials.map((t) => (
+                <TestimonialCard 
+                  key={t.id} 
+                  t={t} 
+                  setModalImage={setModalImage} 
+                  formatCurrency={formatCurrency}
+                  viewMode={viewMode}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-center gap-3 mt-6 mb-4">
-            <button
-              onClick={() => { if (page > 1) handlePageChange(page - 1); }}
-              disabled={page === 1}
-              className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl border border-white/10 transition-all duration-300"
-            >
-              <Icon icon="mdi:chevron-left" className="w-6 h-6 text-white" />
-            </button>
+          {!loading && !error && testimonials.length > 0 && (
+            <div className="space-y-4 mt-6 mb-4">
+              {/* Limit Selector and Page Info */}
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Limit Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowLimitDropdown(!showLimitDropdown)}
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 hover:text-white hover:border-white/20 transition-all"
+                  >
+                    <Icon icon="mdi:format-list-bulleted" className="w-4 h-4" />
+                    <span>{limit} per halaman</span>
+                    <Icon icon="mdi:chevron-down" className={`w-4 h-4 transition-transform ${showLimitDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showLimitDropdown && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-30" 
+                        onClick={() => setShowLimitDropdown(false)}
+                      ></div>
+                      <div className="absolute bottom-full left-0 mb-2 z-40 bg-brand-surface border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[150px]">
+                        {[10, 12, 20, 50, 100].map((l) => (
+                          <button
+                            key={l}
+                            onClick={() => {
+                              setLimit(l);
+                              setPage(1);
+                              setShowLimitDropdown(false);
+                            }}
+                            className={`w-full px-4 py-2 text-left text-sm transition-all ${
+                              limit === l
+                                ? 'bg-brand-gold/20 text-brand-gold border-l-2 border-brand-gold'
+                                : 'text-white/70 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            {l} per halaman
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
 
-            <div className="bg-white/5 rounded-xl px-5 py-2.5 border border-white/10 text-center">
-              <span className="text-white text-sm font-bold">{page}</span>
-              <p className="text-white/60 text-[10px] mt-0.5">{totalTestimonials} item</p>
+                {/* Page Info */}
+                <div className="text-sm text-white/60">
+                  Menampilkan {((page - 1) * limit) + 1} - {Math.min(page * limit, totalTestimonials || testimonials.length)} dari {totalTestimonials || testimonials.length} testimoni
+                </div>
+              </div>
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    if (page > 1) handlePageChange(page - 1);
+                  }}
+                  disabled={page === 1}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-semibold"
+                >
+                  <Icon icon="mdi:chevron-left" className="w-5 h-5" />
+                  Sebelumnya
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-2">
+                  {[...Array(Math.min(5, Math.ceil((totalTestimonials || testimonials.length) / limit) || 1))].map((_, idx) => {
+                    const totalPages = Math.ceil((totalTestimonials || testimonials.length) / limit) || 1;
+                    const pageNum = Math.max(1, Math.min(page - 2 + idx, totalPages));
+                    if (pageNum < 1 || pageNum > totalPages) return null;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all duration-300 text-sm ${
+                          page === pageNum
+                            ? 'bg-brand-gold text-brand-black border-brand-gold shadow-brand-glow font-bold'
+                            : 'bg-white/5 text-white border-white/10 hover:border-brand-gold/30'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => {
+                    const totalPages = Math.ceil((totalTestimonials || testimonials.length) / limit) || 1;
+                    if (page < totalPages) {
+                      handlePageChange(page + 1);
+                    }
+                  }}
+                  disabled={(() => {
+                    // Disable if we're on the last page
+                    const totalPages = Math.ceil((totalTestimonials || testimonials.length) / limit) || 1;
+                    const isLastPage = page >= totalPages;
+                    
+                    // Also disable if we got less than limit items (meaning no more pages)
+                    const hasLessThanLimit = testimonials.length < limit;
+                    
+                    return isLastPage || hasLessThanLimit;
+                  })()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-semibold"
+                >
+                  Selanjutnya
+                  <Icon icon="mdi:chevron-right" className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-
-            <button
-              onClick={() => { if ((testimonials.length === limit) || (typeof totalTestimonials === 'number' && page * limit < totalTestimonials)) handlePageChange(page + 1); }}
-              disabled={!((testimonials.length === limit) || (typeof totalTestimonials === 'number' && page * limit < totalTestimonials))}
-              className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl border border-white/10 transition-all duration-300"
-            >
-              <Icon icon="mdi:chevron-right" className="w-6 h-6 text-white" />
-            </button>
-          </div>
+          )}
 
           {/* Add Testimonial CTA */}
-          <div className="relative mt-6">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-3xl blur opacity-20"></div>
-            <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-3xl p-5 border border-white/10 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Icon icon="mdi:star-circle" className="w-5 h-5 text-[#F45D16]" />
-                <h3 className="text-white font-bold text-base">Bagikan Pengalaman Anda</h3>
+          {!loading && (
+            <div className="relative mt-6 mb-4">
+              <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold via-brand-emerald to-brand-gold rounded-3xl blur-xl opacity-25 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-brand-surface via-brand-surface-soft to-brand-charcoal rounded-3xl p-6 border border-brand-gold/30 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 rounded-full blur-2xl"></div>
+                <div className="relative z-10 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-brand-gold to-brand-gold-deep mb-3 shadow-brand-glow">
+                    <Icon icon="mdi:star-circle" className="w-6 h-6 text-brand-black" />
+                  </div>
+                  <h3 className="text-white font-bold text-lg mb-2">Bagikan Pengalaman Anda</h3>
+                  <p className="text-white/70 text-sm mb-4">Dapatkan bonus Rp 2.000 - Rp 20.000 untuk setiap testimoni yang terverifikasi.</p>
+                  <button
+                    onClick={() => router.push('/forum/upload')}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-gold to-brand-gold-deep text-brand-black font-semibold px-5 py-2.5 text-sm shadow-brand-glow hover:scale-105 active:scale-95 transition-transform"
+                  >
+                    <Icon icon="mdi:upload" className="w-4 h-4" />
+                    Unggah Testimoni Sekarang
+                  </button>
+                </div>
               </div>
-              <p className="text-white/60 text-xs">Dapatkan bonus Rp 2.000 - Rp 20.000 untuk setiap testimoni yang terverifikasi.</p>
             </div>
-          </div>
+          )}
 
           {/* Copyright */}
-          <div className="text-center text-white/60 text-xs flex items-center justify-center gap-2 mt-8">
-            <Icon icon="solar:copyright-bold" className="w-3 h-3" />
-            <span>2025 {applicationData?.company || 'Ciroos, Inc'}. All Rights Reserved.</span>
-          </div>
+          <Copyright />
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/80 backdrop-blur-xl border-t border-white/10 z-50">
-          <div className="max-w-sm mx-auto">
-            <BottomNavbar />
-          </div>
-        </div>
+        {/* Floating Upload Button - Above Navbar */}
+        <button
+          onClick={() => router.push('/forum/upload')}
+          className="fixed bottom-24 right-4 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-brand-gold to-brand-gold-deep text-brand-black shadow-[0_0_35px_rgba(232,193,82,0.4)] hover:shadow-[0_0_45px_rgba(232,193,82,0.5)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group"
+          aria-label="Unggah Testimoni"
+        >
+          <Icon icon="mdi:plus" className="w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />
+        </button>
 
-        <style jsx global>{`
-        .stars {
-  z-index: 10;
-  width: 1px;
-  height: 1px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 718px 1689px #FFF , 1405px 2127px #FFF , 1270px 1148px #FFF , 620px 641px #FFF , 1538px 708px #FFF , 2169px 1632px #FFF , 523px 1494px #FFF , 1081px 2018px #FFF , 1372px 585px #FFF , 974px 576px #FFF , 448px 1231px #FFF , 78px 2055px #FFF , 1180px 1274px #FFF , 1752px 2099px #FFF , 1392px 488px #FFF , 1836px 2303px #FFF , 1309px 816px #FFF , 922px 962px #FFF , 1165px 2485px #FFF , 2054px 176px #FFF , 1425px 747px #FFF , 2253px 2056px #FFF , 1602px 114px #FFF , 433px 1332px #FFF , 65px 1726px #FFF , 257px 334px #FFF , 1512px 1855px #FFF , 775px 2422px #FFF , 2512px 2123px #FFF , 76px 2235px #FFF , 1979px 501px #FFF , 352px 1222px #FFF , 554px 1215px #FFF , 1200px 2163px #FFF , 2078px 1983px #FFF , 2461px 557px #FFF , 1960px 2055px #FFF , 1966px 316px #FFF , 1123px 1402px #FFF , 1461px 2288px #FFF , 1625px 2076px #FFF , 822px 609px #FFF , 531px 1358px #FFF , 900px 1938px #FFF , 1867px 1362px #FFF , 1049px 372px #FFF , 319px 980px #FFF , 2321px 2421px #FFF , 1701px 1425px #FFF , 1827px 1324px #FFF , 126px 1121px #FFF , 527px 1735px #FFF;
-  animation: animStar 100s linear infinite;
-}
-.stars:after {
-  content: " ";
-  top: -600px;
-  width: 1px;
-  height: 1px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 1229px 1419px #FFF , 672px 2257px #FFF , 821px 854px #FFF , 731px 1239px #FFF , 1244px 58px #FFF , 687px 2428px #FFF , 173px 1549px #FFF , 1973px 940px #FFF , 2334px 1057px #FFF , 792px 882px #FFF , 1499px 1912px #FFF , 1892px 9px #FFF , 172px 1753px #FFF , 22px 1577px #FFF , 934px 2059px #FFF , 1398px 2309px #FFF , 100px 77px #FFF , 1545px 22px #FFF , 595px 1917px #FFF , 941px 1452px #FFF , 1226px 1022px #FFF , 1254px 990px #FFF , 2507px 352px #FFF , 111px 887px #FFF , 1666px 168px #FFF , 966px 986px #FFF , 121px 2559px #FFF , 1424px 792px #FFF , 1973px 2544px #FFF , 577px 503px #FFF , 1167px 1107px #FFF , 2397px 1653px #FFF , 1054px 810px #FFF , 663px 805px #FFF , 1084px 317px #FFF , 2214px 759px #FFF , 190px 975px #FFF , 2218px 2104px #FFF , 2013px 1227px #FFF , 383px 1778px #FFF , 1287px 1660px #FFF , 2131px 994px #FFF , 1073px 748px #FFF , 1745px 2372px #FFF , 1424px 252px #FFF , 1274px 2457px #FFF , 1976px 2422px #FFF , 1644px 1665px #FFF , 2372px 1772px #FFF , 1593px 580px #FFF , 894px 2361px #FFF , 31px 1802px #FFF , 1552px 1134px #FFF , 1477px 1847px #FFF , 1647px 2464px #FFF , 599px 510px #FFF , 2016px 226px #FFF , 1402px 243px #FFF , 748px 953px #FFF , 387px 1212px #FFF , 453px 1525px #FFF , 1032px 93px #FFF , 1420px 1399px #FFF , 146px 948px #FFF , 2256px 1631px #FFF , 1405px 394px #FFF , 201px 2149px #FFF , 1077px 1765px #FFF , 34px 2213px #FFF , 2388px 246px #FFF , 392px 667px #FFF , 1595px 181px #FFF , 323px 426px #FFF , 2405px 2410px #FFF , 2484px 280px #FFF;
-}
+        {/* Bottom Navigation - Floating */}
+        <BottomNavbar />
 
-.stars1 {
-  z-index: 10;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 452px 2369px #FFF , 2030px 2013px #FFF , 113px 1775px #FFF , 426px 2228px #FFF , 735px 2395px #FFF , 483px 147px #FFF , 1123px 1666px #FFF , 1944px 113px #FFF , 1096px 372px #FFF , 2005px 118px #FFF , 1948px 2320px #FFF , 2095px 823px #FFF , 742px 1559px #FFF , 1637px 383px #FFF , 877px 992px #FFF , 141px 1522px #FFF , 483px 941px #FFF , 2028px 761px #FFF , 1164px 2482px #FFF , 692px 1202px #FFF , 1008px 62px #FFF , 1820px 2535px #FFF , 1459px 2067px #FFF , 519px 1297px #FFF , 1620px 252px #FFF , 1014px 1855px #FFF , 679px 135px #FFF , 1927px 2544px #FFF , 836px 1433px #FFF , 286px 21px #FFF , 1131px 769px #FFF , 1717px 1031px #FFF , 2121px 517px #FFF , 1865px 1257px #FFF , 1640px 1712px #FFF , 158px 162px #FFF , 2491px 1514px #FFF , 784px 1446px #FFF , 1547px 968px #FFF , 1966px 1461px #FFF , 923px 1883px #FFF , 601px 81px #FFF , 1486px 598px #FFF , 1947px 1462px #FFF , 2161px 1181px #FFF , 773px 675px #FFF , 2023px 455px #FFF , 1199px 1199px #FFF , 94px 1814px #FFF , 1055px 852px #FFF , 583px 631px #FFF , 150px 1931px #FFF , 1472px 597px #FFF , 611px 1338px #FFF , 54px 859px #FFF , 1266px 1019px #FFF , 1028px 256px #FFF , 1442px 964px #FFF , 436px 1325px #FFF , 2446px 1141px #FFF , 723px 70px #FFF , 825px 964px #FFF , 63px 271px #FFF , 647px 849px #FFF , 309px 673px #FFF , 1965px 2090px #FFF , 1672px 9px #FFF , 450px 2504px #FFF , 1675px 2135px #FFF , 2075px 921px #FFF , 1607px 2348px #FFF , 2243px 1494px #FFF;
-  animation: animStar 125s linear infinite;
-}
-.stars1:after {
-  content: " ";
-  top: -600px;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 435px 1410px #FFF , 1717px 2554px #FFF , 885px 1458px #FFF , 1614px 909px #FFF , 26px 2169px #FFF , 1627px 1343px #FFF , 511px 518px #FFF , 1388px 722px #FFF , 748px 1982px #FFF , 837px 2188px #FFF , 891px 1897px #FFF , 917px 2547px #FFF , 866px 2021px #FFF , 1748px 2464px #FFF , 409px 2476px #FFF , 1321px 1824px #FFF , 1946px 1620px #FFF , 84px 1996px #FFF , 773px 475px #FFF , 2327px 1356px #FFF , 181px 38px #FFF , 2122px 1291px #FFF , 2254px 375px #FFF , 654px 432px #FFF , 2022px 710px #FFF , 866px 1651px #FFF , 948px 2128px #FFF , 1107px 1282px #FFF , 1605px 1555px #FFF , 847px 2056px #FFF , 1678px 385px #FFF , 1723px 2282px #FFF , 516px 166px #FFF , 1764px 93px #FFF , 1947px 2302px #FFF , 1357px 1486px #FFF , 1237px 2532px #FFF , 2338px 2002px #FFF , 251px 1525px #FFF , 876px 1121px #FFF , 189px 759px #FFF , 1936px 1574px #FFF , 2510px 1440px #FFF , 204px 836px #FFF , 2044px 437px #FFF , 471px 45px #FFF , 394px 548px #FFF , 1730px 641px #FFF , 1526px 1701px #FFF , 1559px 1106px #FFF , 1396px 1826px #FFF , 1106px 644px #FFF , 160px 2149px #FFF , 1261px 1804px #FFF , 363px 714px #FFF , 2002px 2277px #FFF , 696px 1741px #FFF , 2291px 499px #FFF , 2089px 2229px #FFF;
-}
-
-.stars2 {
-  z-index: 10;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: 380px 1043px #FFF , 10px 1086px #FFF , 660px 1062px #FFF , 1371px 842px #FFF , 1290px 2153px #FFF , 2258px 231px #FFF , 2130px 2217px #FFF , 1084px 758px #FFF , 1464px 1903px #FFF , 621px 2482px #FFF , 2470px 754px #FFF , 1282px 1797px #FFF , 510px 1678px #FFF , 836px 799px #FFF , 2001px 134px #FFF , 2314px 1869px #FFF , 1031px 643px #FFF , 949px 292px #FFF , 16px 2265px #FFF , 465px 1239px #FFF , 2117px 1952px #FFF , 1683px 605px #FFF , 1818px 1945px #FFF , 890px 1749px #FFF , 324px 110px #FFF , 1048px 1442px #FFF , 2399px 1553px #FFF , 157px 551px #FFF , 666px 314px #FFF , 897px 933px #FFF , 2397px 438px #FFF , 1280px 988px #FFF , 1510px 2373px #FFF , 2453px 1645px #FFF , 831px 994px #FFF , 2125px 338px #FFF , 1571px 2128px #FFF , 1792px 53px #FFF , 820px 2480px #FFF , 529px 1544px #FFF , 1941px 928px #FFF , 1632px 795px #FFF , 152px 993px #FFF , 1040px 260px #FFF , 1131px 589px #FFF , 2395px 1336px #FFF , 1537px 1906px #FFF , 1989px 1910px #FFF , 1489px 1098px #FFF , 996px 1585px #FFF , 476px 69px #FFF , 123px 466px #FFF , 374px 414px #FFF , 741px 1097px #FFF , 1415px 1296px #FFF , 945px 1132px #FFF , 909px 2080px #FFF , 2219px 8px #FFF , 2198px 1039px #FFF , 1794px 1513px #FFF , 1484px 1972px #FFF , 1557px 2099px #FFF , 1385px 912px #FFF , 1612px 1474px #FFF , 169px 1963px #FFF;
-  animation: animStar 175s linear infinite;
-}
-.stars2:after {
-  content: " ";
-  top: -600px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  position: absolute;
-  backgroud: transparent;
-  box-shadow: 148px 2112px #FFF , 2328px 2246px #FFF , 793px 1150px #FFF , 2476px 867px #FFF , 195px 2295px #FFF , 721px 1158px #FFF , 344px 1096px #FFF , 1434px 1247px #FFF , 2251px 1334px #FFF , 1696px 1404px #FFF , 1928px 1929px #FFF , 473px 1718px #FFF , 1176px 1364px #FFF , 133px 1990px #FFF , 1396px 1179px #FFF , 1355px 1046px #FFF , 676px 869px #FFF , 2255px 1676px #FFF , 2393px 2105px #FFF , 1032px 1390px #FFF , 773px 2159px #FFF , 1235px 945px #FFF , 1161px 209px #FFF , 1878px 175px #FFF , 287px 1787px #FFF , 509px 935px #FFF , 473px 442px #FFF , 1864px 177px #FFF , 768px 2004px #FFF , 513px 744px #FFF , 2060px 2271px #FFF , 2187px 2135px #FFF , 1818px 505px #FFF , 809px 1998px #FFF , 323px 2553px #FFF , 1420px 167px #FFF , 2418px 2233px #FFF , 1955px 2053px #FFF , 1822px 145px #FFF , 931px 629px #FFF , 94px 2440px #FFF , 1816px 718px #FFF , 386px 668px #FFF , 2040px 397px #FFF , 40px 866px #FFF , 1397px 2398px #FFF , 2399px 297px #FFF , 1611px 259px #FFF , 1393px 1139px #FFF;
-}
-
-.shooting-stars {
-  z-index: 1;
-  width: 5px;
-  height: 85px;
-  border-top-left-radius: 50%;
-  border-top-right-radius: 50%;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0), white);
-  animation: animShootingStar 10s linear infinite;
-}
-
-@keyframes animStar {
-  from {
-    transform: translateY(0px);
-  }
-  to {
-    transform: translateY(-2560px) translateX(-2560px);
-  }
-}
-@keyframes animShootingStar {
-  from {
-    transform: translateY(0px) translateX(0px) rotate(-45deg);
-    opacity: 1;
-    height: 5px;
-  }
-  to {
-    transform: translateY(-2560px) translateX(-2560px) rotate(-45deg);
-    opacity: 1;
-    height: 800px;
-  }
-}
-
-          /* Glassmorphism card matching Ciroos style */
-          .glassmorphism-card {
-            background: radial-gradient(94.23% 79.86% at 50% 31.48%, rgba(243, 250, 247, 0.02) 57%, rgba(243, 250, 247, 0.10) 91.5%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-          }
-
-          /* Input field styling */
-        .input-field {
-            background: rgba(243, 250, 247, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 0.75rem;
-            transition: all 0.3s;
-        }
-          
-        .input-field:focus-within {
-            border-color: #F45D16;
-            box-shadow: 0 0 0 3px rgba(244, 93, 22, 0.2);
-        }
-
+        <style>{`
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -401,7 +423,7 @@ export default function Testimoni() {
 // Optimized TestimonialCard component for testimoni.js
 // Replace the existing TestimonialCard function with this
 
-function TestimonialCard({ t, setModalImage, formatCurrency }) {
+function TestimonialCard({ t, setModalImage, formatCurrency, viewMode = 'grid' }) {
     const [imgUrl, setImgUrl] = useState(null);
     useEffect(() => {
         let isMounted = true;
@@ -413,61 +435,142 @@ function TestimonialCard({ t, setModalImage, formatCurrency }) {
         return () => { isMounted = false; };
     }, [t.image]);
 
-    return (
-      <div className="bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-2xl border border-white/10 overflow-hidden animate-fadeIn">
-        {/* Header Section with Avatar & Reward */}
-        <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F45D16] to-[#FF6B35] flex items-center justify-center shadow-md flex-shrink-0">
-              <Icon icon="mdi:account" className="w-5 h-5 text-white" />
+    if (viewMode === 'list') {
+      return (
+        <div className="bg-gradient-to-r from-brand-surface via-brand-surface-soft to-brand-charcoal rounded-2xl border border-white/10 overflow-hidden animate-fadeIn hover:border-brand-gold/30 hover:shadow-lg hover:shadow-brand-gold/10 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row gap-4 p-4">
+            {/* Avatar & Info */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-gold to-brand-gold-deep flex items-center justify-center shadow-md shadow-brand-gold/30 flex-shrink-0">
+                  <Icon icon="mdi:account" className="w-6 h-6 text-brand-black" />
+                </div>
+                {t.image && imgUrl && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-brand-emerald border-2 border-brand-black flex items-center justify-center">
+                    <Icon icon="mdi:image" className="w-3 h-3 text-brand-black" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">{t.name}</p>
+                <p className="text-xs text-white/60">+62{String(t.number).replace(/^\+?62|^0/, '')}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-bold text-white text-sm">{t.name}</p>
-              <p className="text-xs text-white/60">+62{String(t.number).replace(/^\+?62|^0/, '')}</p>
+            
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white/80 leading-relaxed mb-3">
+                {t.description}
+              </p>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <Icon icon="mdi:clock-outline" className="w-4 h-4" />
+                  <span>
+                    {new Date(t.time.replace(' ', 'T')).toLocaleDateString('id-ID', { 
+                      day: '2-digit', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-brand-emerald/15 text-brand-emerald px-3 py-1.5 rounded-lg text-xs font-bold border border-brand-emerald/30">
+                  <Icon icon="mdi:gift" className="w-4 h-4" />
+                  <span>{formatCurrency(t.reward)}</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 bg-green-500/10 text-green-400 px-2.5 py-1 rounded-lg text-xs font-bold border border-green-500/20">
-            <Icon icon="mdi:gift" className="w-3.5 h-3.5" />
-            <span>{formatCurrency(t.reward)}</span>
-          </div>
-        </div>
 
-        {/* Content Section - Horizontal Layout */}
-        <div className="p-4">
-          <div className="flex gap-3 items-start">
-            {/* Image Thumbnail */}
+            {/* Image */}
             {t.image && imgUrl && (
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 sm:w-24 sm:h-24 w-full h-32">
                 <Image
                   src={imgUrl}
                   alt="bukti penarikan"
                   unoptimized
-                  width={80}
-                  height={80}
-                  className="w-20 h-20 object-cover rounded-xl border-2 border-white/10 shadow-lg cursor-pointer hover:scale-105 hover:border-[#F45D16]/30 transition-all duration-200"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover rounded-xl border-2 border-white/10 shadow-lg cursor-pointer hover:scale-105 hover:border-brand-gold/40 transition-all duration-200"
                   onClick={() => setModalImage(imgUrl)}
                 />
               </div>
             )}
-            
-            {/* Description */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/80 leading-relaxed line-clamp-3">
-                {t.description}
-              </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Grid View
+    return (
+      <div className="group relative bg-gradient-to-br from-brand-surface via-brand-surface-soft to-brand-charcoal rounded-2xl border border-white/10 overflow-hidden animate-fadeIn hover:border-brand-gold/30 hover:shadow-xl hover:shadow-brand-gold/20 transition-all duration-300 cursor-pointer">
+        {/* Glow effect on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/0 via-brand-gold/0 to-brand-gold/0 group-hover:from-brand-gold/5 group-hover:via-brand-gold/0 group-hover:to-brand-emerald/5 transition-all duration-300 pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          {/* Header with Avatar */}
+          <div className="p-3 border-b border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-gold to-brand-gold-deep flex items-center justify-center shadow-md shadow-brand-gold/30 flex-shrink-0">
+                  <Icon icon="mdi:account" className="w-4 h-4 text-brand-black" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-white text-xs truncate">{t.name}</p>
+                  <p className="text-[10px] text-white/60 truncate">+62{String(t.number).replace(/^\+?62|^0/, '')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 bg-brand-emerald/15 text-brand-emerald px-2 py-0.5 rounded-md text-[10px] font-bold border border-brand-emerald/30">
+                <Icon icon="mdi:gift" className="w-3 h-3" />
+                <span className="hidden sm:inline">{formatCurrency(t.reward)}</span>
+              </div>
             </div>
           </div>
 
-          {/* Footer with Timestamp */}
-          <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-white/5">
-            <Icon icon="mdi:clock-outline" className="w-3.5 h-3.5 text-white/50" />
-            <span className="text-xs text-white/50">
-              {new Date(t.time.replace(' ', 'T')).toLocaleDateString('id-ID', { 
-                day: '2-digit', 
-                month: 'short', 
-                year: 'numeric' 
-              })}
-            </span>
+          {/* Image */}
+          {t.image && imgUrl ? (
+            <div className="relative w-full aspect-square overflow-hidden bg-brand-black/20">
+              <Image
+                src={imgUrl}
+                alt="bukti penarikan"
+                unoptimized
+                fill
+                className="object-cover cursor-pointer group-hover:scale-110 transition-transform duration-300"
+                onClick={() => setModalImage(imgUrl)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-brand-gold/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[10px] font-bold text-brand-black flex items-center gap-1">
+                  <Icon icon="mdi:eye" className="w-3 h-3" />
+                  Lihat
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full aspect-square bg-brand-black/20 flex items-center justify-center">
+              <Icon icon="mdi:image-off" className="w-8 h-8 text-white/20" />
+            </div>
+          )}
+
+          {/* Description */}
+          <div className="p-3">
+            <p className="text-xs text-white/80 leading-relaxed line-clamp-2 mb-2">
+              {t.description}
+            </p>
+            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/50">
+                <Icon icon="mdi:clock-outline" className="w-3 h-3" />
+                <span>
+                  {new Date(t.time.replace(' ', 'T')).toLocaleDateString('id-ID', { 
+                    day: '2-digit', 
+                    month: 'short'
+                  })}
+                </span>
+              </div>
+              {!t.image && (
+                <div className="text-brand-emerald text-[10px] font-bold">
+                  {formatCurrency(t.reward)}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

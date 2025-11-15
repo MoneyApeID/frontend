@@ -20,8 +20,8 @@ export default function Home() {
     return (
         <>
             <Head>
-                <title>Ciroos - Your Partnert Investment</title>
-                <meta name="description" content="Ciroos - Your Partnert Investment" />
+                <title>Money Rich - Exclusive Investment Hub</title>
+                <meta name="description" content="Money Rich - Platform investasi eksklusif dengan strategi modern dan aman." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
         </>

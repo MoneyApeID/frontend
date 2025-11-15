@@ -7,13 +7,13 @@ export default function Document() {
       <Head>
         {/* PWA Basic Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="application-name" content="Ciroos" />
-        <meta name="theme-color" content="#F45D16" />
+        <meta name="application-name" content="Money Rich" />
+        <meta name="theme-color" content="#E8C152" />
         
         {/* iOS PWA Meta Tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Ciroos" />
+        <meta name="apple-mobile-web-app-title" content="Money Rich" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         
@@ -107,18 +107,16 @@ export default function Document() {
         <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png" />
         
         {/* Favicon */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
         
         {/* Windows Tiles */}
-        <meta name="msapplication-TileColor" content="#F45D16" />
+        <meta name="msapplication-TileColor" content="#E8C152" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
         
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Ciroos" />
+        <meta property="og:site_name" content="Money Rich" />
         <meta property="og:image" content="/og-image.png" />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:image" content="/twitter-image.png" />

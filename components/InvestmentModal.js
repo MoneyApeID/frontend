@@ -2,86 +2,63 @@
 import React, { useState, useEffect } from 'react';
 import { createInvestment } from '../utils/api';
 import { useRouter } from 'next/router';
-import { BANKS } from '../constants/products';
 import { Icon } from '@iconify/react';
-
-// Define payment methods directly in component
-const PAYMENT_METHODS = [
-  { value: 'QRIS', label: 'QRIS', icon: 'mdi:qrcode-scan' },
-  { value: 'BANK', label: 'Bank Transfer', icon: 'mdi:bank' }
-];
 
 export default function InvestmentModal({ open, onClose, product, user, onSuccess }) {
   const router = useRouter();
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [bank, setBank] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setError('');
+    }
+  }, [open, product?.id]);
 
   if (!open || !product) return null;
 
   // Fixed amount from product (no user input)
-  const amount = product.amount;
-  const dailyProfit = product.daily_profit;
-  const duration = product.duration;
-  const totalReturn = amount + (dailyProfit * duration);
-  
-  // Payment method logic: QRIS max 10jt, above that use BANK
-  const isQRISDisabled = amount > 10000000; // 10 juta
-  
-  // Set default payment method and bank when modal opens
-  useEffect(() => {
-    if (open && product) {
-      const defaultMethod = isQRISDisabled ? 'BANK' : 'QRIS';
-      setPaymentMethod(defaultMethod);
-      if (BANKS && BANKS.length > 0) {
-        setBank(BANKS[0].code);
-      }
-      setError('');
-    }
-  }, [open, product?.id, isQRISDisabled]);
+  const amount = product.amount || 0;
+  const dailyProfit = product.daily_profit || 0;
+  const duration = product.duration || 0;
+  const totalReturn = dailyProfit * duration;
+  const roiPercentage = amount ? (totalReturn / amount) * 100 : 0;
+
+  const balance = user?.balance ?? 0;
+  const remainingBalance = balance - amount;
+  const hasSufficientBalance = remainingBalance >= 0;
   
   // Category info
   const category = product.category || {};
   const categoryName = category.name || 'Unknown';
-  const profitType = category.profit_type || 'unlocked';
-  const isLocked = profitType === 'locked';
 
   const formatCurrency = (amt) => new Intl.NumberFormat('id-ID', { 
     style: 'currency', 
     currency: 'IDR', 
     maximumFractionDigits: 0 
   }).format(amt);
-
-  const handlePaymentMethodClick = (methodValue) => {
-    if (loading) return;
-    
-    // Check if QRIS is disabled and user tries to click it
-    if (methodValue === 'QRIS' && isQRISDisabled) return;
-    
-    // Set payment method
-    setPaymentMethod(methodValue);
-  };
+  const formatPercentage = (value) => new Intl.NumberFormat('id-ID', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: value > 0 && value < 1 ? 1 : 0,
+  }).format(value);
 
   const handleConfirm = async () => {
     setError('');
-    if (paymentMethod === 'BANK' && !bank) {
-      setError('Pilih bank transfer.');
+    if (!hasSufficientBalance) {
+      setError('Saldo balance tidak mencukupi. Silakan lakukan deposit terlebih dahulu.');
       return;
     }
     setLoading(true);
     try {
       const payload = {
         product_id: product.id,
-        payment_method: paymentMethod,
-        payment_channel: paymentMethod === 'BANK' ? bank : undefined,
+        payment_method: 'BALANCE',
+        use_balance: true,
       };
       const data = await createInvestment(payload);
       setLoading(false);
-      if (data && data.data && data.data.order_id) {
-        router.push(`/payment?order_id=${encodeURIComponent(data.data.order_id)}`);
-      } else {
-        setError('Gagal mendapatkan order ID pembayaran');
+      if (onSuccess) {
+        onSuccess(data);
       }
     } catch (err) {
       setError(err.message || 'Gagal melakukan investasi');
@@ -93,10 +70,10 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
     <div className="fixed inset-0 bg-black/80 backdrop-blur-lg z-50 flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
       <div className="relative max-w-md w-full my-4 animate-slideUp">
         {/* Outer Glow */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-[#F45D16] via-[#FF6B35] to-[#0058BC] rounded-3xl blur-xl opacity-40"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-[#E8C152] via-[#B9891F] to-[#4CD6C4] rounded-3xl blur-xl opacity-40"></div>
         
         {/* Main Card */}
-        <div className="relative bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A] rounded-3xl border border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="relative bg-gradient-to-br from-[#11131A] via-[#0F0F0F] to-[#11131A] rounded-3xl border border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* Close Button */}
           <button
             onClick={onClose}
@@ -106,9 +83,9 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
           </button>
 
           {/* Header with Gradient */}
-          <div className="relative p-4 pb-4 bg-gradient-to-br from-[#F45D16]/10 to-[#0058BC]/10 border-b border-white/10 flex-shrink-0">
+          <div className="relative p-4 pb-4 bg-gradient-to-br from-[#E8C152]/10 to-[#4CD6C4]/10 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F45D16] to-[#FF6B35] flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8C152] to-[#B9891F] flex items-center justify-center shadow-lg">
                 <Icon icon="mdi:trending-up" className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -122,47 +99,62 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
           <div className="p-4 space-y-3 overflow-y-auto flex-1">
             {/* Investment Summary */}
             <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16]/30 to-[#0058BC]/30 rounded-2xl blur opacity-50"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#E8C152]/30 to-[#4CD6C4]/30 rounded-2xl blur opacity-50"></div>
               <div className="relative bg-gradient-to-br from-white/5 to-white/[0.02] rounded-2xl p-3 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon icon="mdi:chart-line-variant" className="w-4 h-4 text-[#F45D16]" />
+                  <Icon icon="mdi:chart-line-variant" className="w-4 h-4 text-[#E8C152]" />
                   <h3 className="text-white font-bold text-sm">Detail Investasi</h3>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-white/5 rounded-xl border border-white/5">
-                    <span className="text-white/70 text-xs flex items-center gap-2">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[9px] uppercase tracking-wide text-white/55 flex items-center gap-1">
                       <Icon icon="mdi:cash" className="w-3.5 h-3.5 text-white/50" />
-                      Investasi
-                    </span>
-                    <span className="text-white font-bold text-sm">{formatCurrency(amount)}</span>
+                        Nominal
+                      </p>
+                      <p className="text-sm font-semibold text-white mt-1">{formatCurrency(amount)}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 bg-gradient-to-br from-[#F45D16]/10 to-[#FF6B35]/10 rounded-xl border border-[#F45D16]/20">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Icon icon="mdi:currency-usd" className="w-3 h-3 text-[#F45D16]" />
-                        <p className="text-[9px] text-white/70 font-medium uppercase tracking-wide">Profit</p>
-                      </div>
-                      <p className="text-xs font-bold text-[#F45D16]">{formatCurrency(dailyProfit * duration)}</p>
+                    <div className="p-2 bg-gradient-to-br from-[#E8C152]/12 to-[#B9891F]/12 rounded-xl border border-[#E8C152]/20">
+                      <p className="text-[9px] uppercase tracking-wide text-[#E8C152]/80 flex items-center gap-1">
+                        <Icon icon="mdi:currency-usd" className="w-3 h-3 text-[#E8C152]" />
+                        Profit Harian
+                      </p>
+                      <p className="text-sm font-semibold text-[#E8C152] mt-1">{formatCurrency(dailyProfit)}</p>
                     </div>
-                    
-                    <div className="p-2 bg-gradient-to-br from-[#0058BC]/10 to-[#F45D16]/10 rounded-xl border border-[#0058BC]/20">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Icon icon="mdi:calendar-clock" className="w-3 h-3 text-[#0058BC]" />
-                        <p className="text-[9px] text-white/70 font-medium uppercase tracking-wide">Durasi</p>
-                      </div>
-                      <p className="text-xs font-bold text-[#0058BC]">{duration} hari</p>
+                    <div className="p-2 bg-gradient-to-br from-[#4CD6C4]/12 to-[#E8C152]/12 rounded-xl border border-[#4CD6C4]/20 sm:col-span-1 col-span-2">
+                      <p className="text-[9px] uppercase tracking-wide text-[#4CD6C4]/80 flex items-center gap-1">
+                        <Icon icon="mdi:calendar-clock" className="w-3 h-3 text-[#4CD6C4]" />
+                        Durasi
+                      </p>
+                      <p className="text-sm font-semibold text-[#4CD6C4] mt-1">{duration} hari</p>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[9px] uppercase tracking-wide text-white/50 flex items-center gap-1">
+                        <Icon icon="mdi:trophy" className="w-3.5 h-3.5 text-[#E8C152]" />
+                        Profit Per Siklus
+                      </p>
+                      <p className="text-sm font-semibold text-white mt-1">{formatCurrency(totalReturn)}</p>
+                      </div>
+                    <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[9px] uppercase tracking-wide text-white/50 flex items-center gap-1">
+                        <Icon icon="mdi:percent" className="w-3.5 h-3.5 text-[#4CD6C4]" />
+                        ROI Per Siklus
+                      </p>
+                      <p className="text-sm font-semibold text-[#4CD6C4] mt-1">{formatPercentage(roiPercentage)}%</p>
+                    </div>
+                  </div>
                   
-                  <div className="mt-2 pt-2 border-t border-white/10">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-bold flex items-center gap-1.5 text-sm">
-                        <Icon icon="mdi:trophy" className="w-4 h-4 text-[#F45D16]" />
-                        Total Return
+                  <div className="pt-3 border-t border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <span className="text-white font-semibold text-sm flex items-center gap-1.5">
+                        <Icon icon="mdi:cash-check" className="w-4 h-4 text-[#E8C152]" />
+                        Proyeksi Pencairan
                       </span>
-                      <span className="text-white font-bold text-base bg-gradient-to-r from-[#F45D16] to-[#FF6B35] bg-clip-text text-transparent">
+                      <span className="text-base font-bold text-white bg-gradient-to-r from-[#E8C152] to-[#B9891F] bg-clip-text text-transparent">
                         {formatCurrency(totalReturn)}
                       </span>
                     </div>
@@ -171,79 +163,50 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
               </div>
             </div>
 
-            {/* Payment Method Selection */}
+            {/* Balance Summary */}
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#E8C152]/20 via-transparent to-[#4CD6C4]/20 rounded-2xl blur opacity-60"></div>
+              <div className="relative bg-gradient-to-br from-white/5 to-white/[0.01] rounded-2xl p-4 border border-white/10">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-4">
             <div>
-              <label className="block text-white text-xs font-semibold mb-2 flex items-center gap-2">
-                <Icon icon="mdi:credit-card" className="w-4 h-4 text-[#F45D16]" />
-                Metode Pembayaran
-              </label>
-              
-              <div className="grid grid-cols-2 gap-2">
-                {PAYMENT_METHODS.map((method) => {
-                  const isDisabled = method.value === 'QRIS' && isQRISDisabled;
-                  const isSelected = paymentMethod === method.value;
-                  
-                  return (
-                    <button
-                      key={method.value}
-                      type="button"
-                      onClick={() => handlePaymentMethodClick(method.value)}
-                      disabled={loading || isDisabled}
-                      className={`
-                        p-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1.5
-                        ${isSelected
-                          ? 'bg-gradient-to-br from-[#F45D16]/20 to-[#FF6B35]/20 border-[#F45D16] shadow-lg shadow-[#F45D16]/20'
-                          : isDisabled
-                            ? 'bg-white/5 border-white/10 opacity-30 cursor-not-allowed'
-                            : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 cursor-pointer'
-                        }
-                        ${loading ? 'opacity-50 cursor-not-allowed' : ''}
-                      `}
-                    >
-                      <Icon 
-                        icon={method.icon} 
-                        className={`w-6 h-6 ${isSelected ? 'text-[#F45D16]' : isDisabled ? 'text-white/30' : 'text-white/70'}`} 
-                      />
-                      <span className={`text-xs font-semibold ${isSelected ? 'text-white' : isDisabled ? 'text-white/30' : 'text-white/70'}`}>
-                        {method.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {paymentMethod === 'BANK' && BANKS && BANKS.length > 0 && (
-                <div className="relative mt-2">
-                  <select
-                    value={bank}
-                    onChange={(e) => setBank(e.target.value)}
-                    disabled={loading}
-                    className="relative w-full bg-[#1A1A1A] border border-white/20 rounded-xl py-2 px-3 text-white text-sm font-medium outline-none focus:border-[#F45D16] focus:shadow-[0_0_20px_rgba(244,93,22,0.2)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                      backgroundPosition: 'right 12px center',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: '16px'
-                    }}
-                  >
-                    {BANKS.map((b) => (
-                      <option key={b.code} value={b.code} style={{ backgroundColor: '#1A1A1A', color: 'white' }}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              {/* QRIS Limit Warning */}
-              {isQRISDisabled && (
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2 flex items-start gap-2 mt-2">
-                  <Icon icon="mdi:alert-circle" className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-[11px] text-orange-200 leading-relaxed">
-                    <span className="font-semibold">Limit QRIS:</span> Transaksi di atas Rp 10.000.000 harus menggunakan Bank Transfer
+                      <p className="text-[11px] uppercase tracking-[0.32em] text-white/55">Saldo Balance</p>
+                      <p className="text-xl font-semibold text-white mt-1">{formatCurrency(balance)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] uppercase tracking-wide text-white/45">Sisa Setelah Beli</p>
+                      <p className={`text-sm font-semibold ${hasSufficientBalance ? 'text-[#4CD6C4]' : 'text-red-300'}`}>
+                        {formatCurrency(hasSufficientBalance ? remainingBalance : 0)}
+                      </p>
+                      {!hasSufficientBalance && (
+                        <p className="text-[11px] text-red-200 mt-1">Kurang {formatCurrency(Math.abs(remainingBalance))}</p>
+                      )}
+                    </div>
                   </div>
+
+                  {!hasSufficientBalance && (
+                    <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-3 flex flex-col gap-3">
+                      <div className="flex items-start gap-2">
+                        <Icon icon="mdi:alert" className="w-4 h-4 text-red-300 mt-0.5" />
+                        <div className="text-xs text-red-200 leading-relaxed">
+                          Saldo balance Anda belum mencukupi untuk membeli produk ini. Lakukan deposit terlebih dahulu agar transaksi dapat diproses.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          router.push('/deposit');
+                          onClose?.();
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E8C152] to-[#B9891F] text-brand-black font-semibold text-xs px-4 py-2 shadow-brand-glow hover:-translate-y-0.5 transition-transform duration-300"
+                      >
+                        <Icon icon="mdi:wallet-plus" className="w-4 h-4" />
+                        Deposit Sekarang
+                      </button>
                 </div>
               )}
+                </div>
+              </div>
             </div>
 
             {/* Error Message */}
@@ -271,11 +234,11 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
               
               <button
                 onClick={handleConfirm}
-                disabled={loading}
+                disabled={loading || !hasSufficientBalance}
                 className="flex-1 relative group overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#F45D16] to-[#FF6B35] rounded-xl transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#F45D16]/50"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#d74e0f] to-[#F45D16] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#E8C152] to-[#B9891F] rounded-xl transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#E8C152]/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#deb956] to-[#E8C152] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all duration-300 flex items-center justify-center gap-2 group-disabled:opacity-60 group-disabled:cursor-not-allowed">
                   {loading ? (
                     <>
@@ -285,7 +248,7 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
                   ) : (
                     <>
                       <Icon icon="mdi:rocket-launch" className="w-4 h-4" />
-                      Beli Sekarang
+                      Gunakan Saldo Balance
                     </>
                   )}
                 </div>
@@ -295,6 +258,7 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
         </div>
       </div>
 
+      {/* eslint-disable react/no-unknown-property */}
       <style jsx global>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -340,6 +304,7 @@ export default function InvestmentModal({ open, onClose, product, user, onSucces
           -moz-appearance: textfield;
         }
       `}</style>
+      {/* eslint-enable react/no-unknown-property */}
     </div>
   );
 }

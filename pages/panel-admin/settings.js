@@ -18,15 +18,17 @@ export default function AdminSettings() {
     link_cs: 't.me/Vla_Devs',
     link_group: 't.me/jasasitusponzi',
     link_app: 'https://play.google.com/store/apps/details?id=com.vladevs.app',
-    logo: '',
+    popup: '',
+    popup_title: '',
     maintenance: false,
     closed_register: false,
     auto_withdraw: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logo, setLogo] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null);
+  const [popupFile, setPopupFile] = useState(null);
+  const [popupPreview, setPopupPreview] = useState(null);
+  const [popupImageUrl, setPopupImageUrl] = useState(null);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('general');
 
@@ -47,7 +49,8 @@ export default function AdminSettings() {
           link_app: res.data.link_app || '',
           link_cs: res.data.link_cs || '',
           link_group: res.data.link_group || '',
-          logo: res.data.logo || '',
+          popup: res.data.popup || '',
+          popup_title: res.data.popup_title || '',
           maintenance: res.data.maintenance ?? false,
           closed_register: res.data.closed_register ?? false,
           max_withdraw: res.data.max_withdraw ?? 10000000,
@@ -55,6 +58,19 @@ export default function AdminSettings() {
           auto_withdraw: res.data.auto_withdraw ?? false,
           withdraw_charge: res.data.withdraw_charge ?? 2.5
         });
+
+        // Fetch popup image from S3 if popup exists
+        if (res.data.popup) {
+          try {
+            const imageRes = await fetch(`/api/s3-image-server?key=${encodeURIComponent(res.data.popup)}`);
+            const imageData = await imageRes.json();
+            if (imageData?.url) {
+              setPopupImageUrl(imageData.url);
+            }
+          } catch (err) {
+            console.error('Failed to load popup image:', err);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -73,12 +89,12 @@ export default function AdminSettings() {
     }
   };
 
-  const handleLogoChange = (e) => {
+  const handlePopupChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        setError('Ukuran file logo maksimal 2MB');
+        setError('Ukuran file popup maksimal 2MB');
         return;
       }
 
@@ -88,12 +104,11 @@ export default function AdminSettings() {
         return;
       }
 
-      setLogo(file);
-      setSettings(prev => ({ ...prev, logo: file.name }));
+      setPopupFile(file);
       
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result);
+        setPopupPreview(reader.result);
       };
       reader.readAsDataURL(file);
       setError('');
@@ -113,30 +128,51 @@ export default function AdminSettings() {
         return;
       }
 
-      const body = {
-        name: settings.name,
-        company: settings.company,
-        link_app: settings.link_app,
-        link_cs: settings.link_cs,
-        link_group: settings.link_group,
-        logo: settings.logo,
-        maintenance: !!settings.maintenance,
-        closed_register: !!settings.closed_register,
-        max_withdraw: Number(settings.max_withdraw),
-        min_withdraw: Number(settings.min_withdraw),
-        auto_withdraw: !!settings.auto_withdraw,
-        withdraw_charge: Number(settings.withdraw_charge)
-      };
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('name', settings.name);
+      formData.append('company', settings.company);
+      formData.append('link_app', settings.link_app);
+      formData.append('link_cs', settings.link_cs);
+      formData.append('link_group', settings.link_group);
+      formData.append('popup_title', settings.popup_title);
+      formData.append('maintenance', settings.maintenance ? 'true' : 'false');
+      formData.append('closed_register', settings.closed_register ? 'true' : 'false');
+      formData.append('max_withdraw', String(settings.max_withdraw));
+      formData.append('min_withdraw', String(settings.min_withdraw));
+      formData.append('auto_withdraw', settings.auto_withdraw ? 'true' : 'false');
+      formData.append('withdraw_charge', String(settings.withdraw_charge));
+      
+      // Append popup file if selected
+      if (popupFile) {
+        formData.append('popup', popupFile);
+      }
 
       const res = await adminRequest('/settings', { 
         method: 'PUT', 
-        body: JSON.stringify(body) 
+        body: formData
       });
       
       if (res && res.success) {
         if (res.data) {
           setSettings(prev => ({ ...prev, ...res.data }));
+          
+          // Reload popup image if popup was updated
+          if (res.data.popup) {
+            try {
+              const imageRes = await fetch(`/api/s3-image-server?key=${encodeURIComponent(res.data.popup)}`);
+              const imageData = await imageRes.json();
+              if (imageData?.url) {
+                setPopupImageUrl(imageData.url);
+              }
+            } catch (err) {
+              console.error('Failed to load popup image:', err);
+            }
+          }
         }
+        // Reset file input
+        setPopupFile(null);
+        setPopupPreview(null);
         // Show success feedback
         const successDiv = document.createElement('div');
         successDiv.className = 'fixed top-20 right-6 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-lg z-50';
@@ -256,39 +292,49 @@ export default function AdminSettings() {
               </div>
 
               <div className="space-y-6">
-                {/* Logo Upload */}
+                {/* Popup Upload */}
                 <div>
-                  <label className="block text-gray-400 text-sm mb-4">Logo Aplikasi</label>
+                  <label className="block text-gray-400 text-sm mb-4">Gambar Popup</label>
                   <div className="flex items-center gap-6">
-                    <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-dashed border-white/20">
-                      {logoPreview ? (
-                        <Image src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
-                      ) : settings.logo ? (
-                        <div className="text-center">
-                          <Icon icon="mdi:image-check" className="text-green-400 w-8 h-8 mb-1" />
-                          <p className="text-xs text-gray-400">Logo Tersimpan</p>
-                        </div>
+                    <div className="relative w-48 h-32 bg-white/10 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-dashed border-white/20">
+                      {popupPreview ? (
+                        <Image src={popupPreview} alt="Popup preview" fill className="object-cover" unoptimized />
+                      ) : popupImageUrl ? (
+                        <Image src={popupImageUrl} alt="Popup image" fill className="object-cover" unoptimized />
                       ) : (
                         <div className="text-center">
                           <Icon icon="mdi:image-plus" className="text-gray-400 w-8 h-8 mb-1" />
-                          <p className="text-xs text-gray-400">Upload Logo</p>
+                          <p className="text-xs text-gray-400">Upload Popup</p>
                         </div>
                       )}
                     </div>
                     <div>
                       <label className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 inline-flex items-center gap-2">
                         <Icon icon="mdi:upload" className="w-4 h-4" />
-                        Pilih Logo Baru
+                        Pilih Gambar Popup
                         <input 
                           type="file" 
                           className="hidden" 
-                          onChange={handleLogoChange} 
+                          onChange={handlePopupChange} 
                           accept="image/*" 
                         />
                       </label>
                       <p className="text-gray-500 text-xs mt-2">Format: PNG, JPG, SVG. Maksimal 2MB</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Popup Title */}
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Judul Popup</label>
+                  <input
+                    type="text"
+                    name="popup_title"
+                    value={settings.popup_title}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="Masukkan judul popup"
+                  />
                 </div>
 
                 {/* Site Name */}

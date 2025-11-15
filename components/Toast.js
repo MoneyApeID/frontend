@@ -1,5 +1,6 @@
 // components/Toast.js
 import { useEffect } from 'react';
+import { Icon } from '@iconify/react';
 
 export default function Toast({ open, message, type = 'success', onClose }) {
   useEffect(() => {
@@ -12,26 +13,35 @@ export default function Toast({ open, message, type = 'success', onClose }) {
   if (!open) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: 32,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      background: type === 'success' ? 'linear-gradient(45deg, #a020f0, #00e5ff)' : 'linear-gradient(45deg, #ff3e6d, #a020f0)',
-      color: '#fff',
-      padding: '16px 32px',
-      borderRadius: 12,
-      boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
-      fontWeight: 600,
-      fontSize: 16,
-      zIndex: 99999,
-      animation: 'toastIn 0.3s',
-      minWidth: 220,
-      textAlign: 'center',
-    }}>
-      {message}
-      <style>{`
-        @keyframes toastIn { from { opacity: 0; transform: translateY(40px) translateX(-50%); } to { opacity: 1; transform: translateY(0) translateX(-50%); } }
+    <div 
+      className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[99999] px-6 py-4 rounded-xl shadow-2xl backdrop-blur-xl border transition-all duration-300 max-w-sm w-full mx-auto ${
+        type === 'success' 
+          ? 'bg-gradient-to-r from-emerald-950/85 via-emerald-900/80 to-teal-900/85 border-emerald-800/35 text-white/95 shadow-emerald-800/12' 
+          : 'bg-gradient-to-r from-red-500/95 to-red-600/95 border-red-500/60 text-white shadow-red-500/30'
+      }`}
+      style={{
+        animation: 'toastIn 0.3s ease-out'
+      }}
+    >
+      <div className="flex items-center justify-center gap-2">
+        {type === 'success' ? (
+          <Icon icon="mdi:check-circle" className="w-5 h-5 text-white/90 flex-shrink-0" />
+        ) : (
+          <Icon icon="mdi:alert-circle" className="w-5 h-5 text-white flex-shrink-0" />
+        )}
+        <p className="font-semibold text-sm text-center text-white/90">{message}</p>
+      </div>
+      <style jsx>{`
+        @keyframes toastIn { 
+          from { 
+            opacity: 0; 
+            transform: translateY(40px) translateX(-50%); 
+          } 
+          to { 
+            opacity: 1; 
+            transform: translateY(0) translateX(-50%); 
+          } 
+        }
       `}</style>
     </div>
   );

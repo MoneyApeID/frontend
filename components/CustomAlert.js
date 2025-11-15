@@ -33,13 +33,13 @@ export default function CustomAlert({
   const getIconAndColor = () => {
     switch (type) {
       case 'success':
-        return { icon: 'mdi:check-circle', color: 'text-green-400', bgColor: 'bg-green-500/10' };
+        return { icon: 'mdi:check-circle', color: 'text-brand-emerald', bgColor: 'bg-brand-emerald/20 border-brand-emerald/30' };
       case 'warning':
-        return { icon: 'mdi:alert-circle', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' };
+        return { icon: 'mdi:alert-circle', color: 'text-brand-gold', bgColor: 'bg-brand-gold/20 border-brand-gold/30' };
       case 'error':
-        return { icon: 'mdi:close-circle', color: 'text-red-400', bgColor: 'bg-red-500/10' };
+        return { icon: 'mdi:close-circle', color: 'text-red-400', bgColor: 'bg-red-500/20 border-red-500/30' };
       default:
-        return { icon: 'mdi:information', color: 'text-blue-400', bgColor: 'bg-blue-500/10' };
+        return { icon: 'mdi:information', color: 'text-brand-gold', bgColor: 'bg-brand-gold/20 border-brand-gold/30' };
     }
   };
 
@@ -55,11 +55,11 @@ export default function CustomAlert({
       
       {/* Modal */}
       <div className="relative w-full max-w-md mx-auto">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-2xl blur opacity-20"></div>
-        <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-2xl p-6 border border-white/10">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-gold/30 to-brand-emerald/30 rounded-2xl blur opacity-40"></div>
+        <div className="relative bg-gradient-to-br from-brand-surface to-brand-surface-soft rounded-2xl p-6 border border-white/10 shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bgColor}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${bgColor}`}>
               <Icon icon={icon} className={`w-6 h-6 ${color}`} />
             </div>
             <h3 className="text-white font-bold text-lg">{title}</h3>
@@ -87,7 +87,7 @@ export default function CustomAlert({
                 if (onConfirm) onConfirm();
                 onClose();
               }}
-              className="px-6 py-2 bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16] text-white font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              className="px-6 py-2 bg-gradient-to-r from-brand-gold to-brand-gold-deep hover:from-brand-gold-deep hover:to-brand-gold text-brand-black font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-brand-glow"
             >
               {confirmText}
             </button>

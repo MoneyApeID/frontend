@@ -93,6 +93,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       color: "from-green-600 to-emerald-600"
     },
     { 
+      icon: "mdi:wallet", 
+      label: "Kelola Deposit", 
+      path: "/panel-admin/deposits",
+      badge: null,
+      color: "from-blue-600 to-indigo-600"
+    },
+    { 
       icon: "mdi:cash-check", 
       label: "Kelola Penarikan", 
       path: "/panel-admin/withdrawals",
@@ -114,11 +121,39 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       color: "from-pink-600 to-rose-600"
     },
     { 
+      icon: "mdi:shape", 
+      label: "Kelola Kategori", 
+      path: "/panel-admin/categories",
+      badge: null,
+      color: "from-blue-600 to-indigo-600"
+    },
+    { 
       icon: "mdi:package-variant", 
       label: "Kelola Produk", 
       path: "/panel-admin/products",
       badge: null,
       color: "from-teal-600 to-green-600"
+    },
+    { 
+      icon: "mdi:play-circle", 
+      label: "Kelola Tutorial", 
+      path: "/panel-admin/tutorials",
+      badge: null,
+      color: "from-red-600 to-pink-600"
+    },
+    { 
+      icon: "mdi:sitemap", 
+      label: "Kelola Binary", 
+      path: "/panel-admin/binary",
+      badge: null,
+      color: "from-purple-600 to-indigo-600"
+    },
+    { 
+      icon: "mdi:trophy", 
+      label: "Kelola Rewards", 
+      path: "/panel-admin/rewards",
+      badge: null,
+      color: "from-amber-600 to-yellow-600"
     },
     { 
       icon: "mdi:bank", 

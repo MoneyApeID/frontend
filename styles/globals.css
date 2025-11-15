@@ -5,8 +5,13 @@
 
 /* Tambahkan ini di file styles/globals.css Anda */
 :root {
-  --gradient-top-right: radial-gradient(100% 80% at 85% 0%, rgba(0,88,188,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%);
-  --gradient-bottom-left: radial-gradient(90% 70% at 0% 100%, rgba(255,100,0,0.25) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%);
+  --gradient-top-right: radial-gradient(100% 80% at 85% 0%, rgba(232,193,82,0.28) 0%, rgba(5,6,8,0.4) 45%, rgba(5,6,8,0) 100%);
+  --gradient-bottom-left: radial-gradient(90% 70% at 0% 100%, rgba(185,137,31,0.22) 0%, rgba(5,6,8,0.35) 45%, rgba(5,6,8,0) 100%);
+  --brand-black: #050608;
+  --brand-charcoal: #0B0D12;
+  --brand-surface: #11131A;
+  --brand-gold: #E8C152;
+  --brand-gold-deep: #B9891F;
 }
 
 body {
@@ -16,6 +21,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--brand-black);
+  color: #f9f9f4;
 }
 
 code {

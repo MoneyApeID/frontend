@@ -192,7 +192,7 @@ export default function AppInstallButton({ applicationData, className = "" }) {
       return {
         icon: 'mdi:open-in-app',
         text: 'BUKA APLIKASI',
-        subtitle: 'Lanjutkan di aplikasi Ciroos',
+        subtitle: `Lanjutkan di aplikasi ${applicationData?.name || 'Money Rich'}`,
         isLoading: false
       };
     }
@@ -226,21 +226,23 @@ export default function AppInstallButton({ applicationData, className = "" }) {
   return (
     <>
       <div className={`relative ${className}`}>
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F45D16] to-[#0058BC] rounded-2xl blur opacity-20"></div>
-        <div className="relative bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] rounded-2xl p-5 border border-white/10 text-center">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-gold/30 to-brand-emerald/30 rounded-2xl blur opacity-40"></div>
+        <div className="relative bg-gradient-to-br from-brand-surface to-brand-surface-soft rounded-2xl p-5 border border-white/10 text-center shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              isAppInstalledState ? 'bg-green-500/10' : 'bg-[#F45D16]/10'
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+              isAppInstalledState 
+                ? 'bg-brand-emerald/20 border-brand-emerald/30' 
+                : 'bg-brand-gold/20 border-brand-gold/30'
             }`}>
               <Icon 
                 icon={buttonConfig.icon} 
                 className={`w-6 h-6 ${
-                  isAppInstalledState ? 'text-green-400' : 'text-[#F45D16]'
+                  isAppInstalledState ? 'text-brand-emerald' : 'text-brand-gold'
                 } ${buttonConfig.isLoading ? 'animate-spin' : ''}`} 
               />
             </div>
             <h3 className="text-white font-bold text-base">
-              {applicationData?.name || 'Ciroos'} App
+              {applicationData?.name || 'Money Rich'} App
             </h3>
           </div>
           
@@ -260,9 +262,11 @@ export default function AppInstallButton({ applicationData, className = "" }) {
             disabled={isCheckingInstallation}
             className={`inline-flex items-center gap-2 ${
               isAppInstalledState
-                ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                : 'bg-gradient-to-r from-[#F45D16] to-[#FF6B35] hover:from-[#d74e0f] hover:to-[#F45D16]'
-            } hover:scale-[1.02] active:scale-[0.98] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg ${
+                ? 'bg-gradient-to-r from-brand-emerald to-teal-600 hover:from-teal-600 hover:to-brand-emerald text-white'
+                : 'bg-gradient-to-r from-brand-gold to-brand-gold-deep hover:from-brand-gold-deep hover:to-brand-gold text-brand-black'
+            } hover:scale-[1.02] active:scale-[0.98] font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg ${
+              isAppInstalledState ? 'shadow-brand-emerald/30' : 'shadow-brand-gold/30'
+            } ${
               isCheckingInstallation ? 'opacity-50 cursor-not-allowed' : ''
             } w-full`}
           >
@@ -277,9 +281,9 @@ export default function AppInstallButton({ applicationData, className = "" }) {
 
           {/* Additional info for Android users */}
           {deviceType.isAndroid && !isAppInstalledState && (
-            <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
+            <div className="mt-4 p-3 bg-brand-black/40 rounded-lg border border-white/10">
               <p className="text-white/50 text-[10px] leading-relaxed">
-                <Icon icon="mdi:shield-check" className="w-3 h-3 inline mr-1 text-green-400" />
+                <Icon icon="mdi:shield-check" className="w-3 h-3 inline mr-1 text-brand-emerald" />
                 Aplikasi resmi & aman dari Google Play Store
               </p>
             </div>
