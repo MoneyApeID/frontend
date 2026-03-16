@@ -24,22 +24,46 @@ const Withdraw = () => {
   const [isWithdrawalAvailable, setIsWithdrawalAvailable] = useState(false);
   const [withdrawalMessage, setWithdrawalMessage] = useState('');
 
+  const [withdrawStartTime, setWithdrawStartTime] = useState('12:00');
+  const [withdrawEndTime, setWithdrawEndTime] = useState('17:00');
+  const [withdrawDays, setWithdrawDays] = useState('1,2,3,4,5,6');
+
   const checkWithdrawalAvailability = () => {
     const now = new Date();
     const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-    const day = wibTime.getDay();
+    const day = wibTime.getDay().toString();
     const hours = wibTime.getHours();
+    const minutes = wibTime.getMinutes();
+    const currentMins = hours * 60 + minutes;
 
-    if (day === 0) {
+    // Parse start and end time
+    const [startH, startM] = withdrawStartTime.split(':').map(Number);
+    const startMins = startH * 60 + (startM || 0);
+
+    const [endH, endM] = withdrawEndTime.split(':').map(Number);
+    const endMins = endH * 60 + (endM || 0);
+
+    // Check day
+    const allowedDays = withdrawDays ? withdrawDays.split(',') : [];
+    if (!allowedDays.includes(day)) {
       setIsWithdrawalAvailable(false);
-      setWithdrawalMessage('Penarikan hanya dapat dilakukan pada hari kerja');
+      setWithdrawalMessage('Penarikan tidak dapat dilakukan pada hari ini');
       return false;
     }
 
-    if (hours < 12 || hours >= 17) {
-      setIsWithdrawalAvailable(false);
-      setWithdrawalMessage('Penarikan hanya dapat dilakukan pada jam kerja');
-      return false;
+    // Check time
+    if (startMins <= endMins) {
+      if (currentMins < startMins || currentMins >= endMins) {
+        setIsWithdrawalAvailable(false);
+        setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
+        return false;
+      }
+    } else {
+      if (currentMins < startMins && currentMins >= endMins) {
+        setIsWithdrawalAvailable(false);
+        setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
+        return false;
+      }
     }
 
     setIsWithdrawalAvailable(true);
@@ -51,7 +75,7 @@ const Withdraw = () => {
     checkWithdrawalAvailability();
     const interval = setInterval(checkWithdrawalAvailability, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [withdrawStartTime, withdrawEndTime, withdrawDays]);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
@@ -83,6 +107,10 @@ const Withdraw = () => {
             if (appConfig.min_withdraw) setMinWithdraw(Number(appConfig.min_withdraw));
             if (appConfig.max_withdraw) setMaxWithdraw(Number(appConfig.max_withdraw));
             if (appConfig.withdraw_charge) setFee(Number(appConfig.withdraw_charge));
+            if (appConfig.withdraw_start_time) setWithdrawStartTime(appConfig.withdraw_start_time);
+            if (appConfig.withdraw_end_time) setWithdrawEndTime(appConfig.withdraw_end_time);
+            if (appConfig.withdraw_days) setWithdrawDays(appConfig.withdraw_days);
+            
             setApplicationData({
                 name: appConfig.name || 'Money Rich',
                 healthy: appConfig.healthy || false,
@@ -225,7 +253,7 @@ const Withdraw = () => {
                 Tarik Saldo Income Anda
               </h1>
               <p className="text-sm text-white/60 max-w-2xl mt-2">
-                Cairkan hasil investasi langsung ke rekening bank terverifikasi. Proses otomatis setiap hari kerja pukul 12:00 - 17:00 WIB.
+                Cairkan hasil investasi langsung ke rekening bank terverifikasi. Proses penarikan tunduk pada hari dan jam kerja operasional.
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-white/50">
@@ -411,8 +439,7 @@ const Withdraw = () => {
                 <p>• Penarikan dana minimal {formatCurrency(minWithdraw)}</p>
                 <p>• Biaya admin {fee}% dipotong dari jumlah penarikan</p>
                 <p>• Penarikan hanya dapat dilakukan 1x per hari</p>
-                <p>• Jam operasional: Senin-Sabtu, 12:00 - 17:00 WIB</p>
-                <p>• Proses batch: 17:00 - 19:00 WIB</p>
+                <p>• Jam operasional: {withdrawStartTime} - {withdrawEndTime} WIB</p>
               </div>
             </div>
           </section>
@@ -455,7 +482,7 @@ const Withdraw = () => {
                     <Icon icon="mdi:clock-alert-outline" className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-yellow-200 font-bold mb-1">{withdrawalMessage}</p>
-                      <p className="text-yellow-200/80 text-xs">Penarikan dana tersedia Senin-Sabtu pukul 12:00 - 17:00 WIB</p>
+                      <p className="text-yellow-200/80 text-xs">Penarikan dana tergantung pada jadwal operasional.</p>
                     </div>
                   </div>
                 )}

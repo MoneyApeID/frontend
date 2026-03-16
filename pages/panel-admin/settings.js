@@ -16,6 +16,9 @@ export default function AdminSettings() {
     min_withdraw: 50000,
     max_withdraw: 10000000,
     withdraw_charge: 2.5,
+    withdraw_start_time: '12:00',
+    withdraw_end_time: '17:00',
+    withdraw_days: '1,2,3,4,5,6',
     link_cs: 't.me/Vla_Devs',
     link_group: 't.me/jasasitusponzi',
     link_app: 'https://play.google.com/store/apps/details?id=com.vladevs.app',
@@ -32,6 +35,17 @@ export default function AdminSettings() {
   const [popupImageUrl, setPopupImageUrl] = useState(null);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('general');
+
+  // Days helper
+  const DAYS = [
+    { value: '1', label: 'Senin' },
+    { value: '2', label: 'Selasa' },
+    { value: '3', label: 'Rabu' },
+    { value: '4', label: 'Kamis' },
+    { value: '5', label: 'Jumat' },
+    { value: '6', label: 'Sabtu' },
+    { value: '0', label: 'Minggu' }
+  ];
 
   useEffect(() => {
     if (authLoading) return;
@@ -58,7 +72,10 @@ export default function AdminSettings() {
           max_withdraw: res.data.max_withdraw ?? 10000000,
           min_withdraw: res.data.min_withdraw ?? 50000,
           auto_withdraw: res.data.auto_withdraw ?? false,
-          withdraw_charge: res.data.withdraw_charge ?? 2.5
+          withdraw_charge: res.data.withdraw_charge ?? 2.5,
+          withdraw_start_time: res.data.withdraw_start_time || '12:00',
+          withdraw_end_time: res.data.withdraw_end_time || '17:00',
+          withdraw_days: res.data.withdraw_days || '1,2,3,4,5,6'
         });
 
         // Fetch popup image from S3 if popup exists
@@ -89,6 +106,16 @@ export default function AdminSettings() {
     } else {
       setSettings(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleDaysChange = (dayValue) => {
+    let currentDays = settings.withdraw_days ? settings.withdraw_days.split(',') : [];
+    if (currentDays.includes(dayValue)) {
+      currentDays = currentDays.filter(d => d !== dayValue);
+    } else {
+      currentDays.push(dayValue);
+    }
+    setSettings(prev => ({ ...prev, withdraw_days: currentDays.join(',') }));
   };
 
   const handlePopupChange = (e) => {
@@ -145,6 +172,9 @@ export default function AdminSettings() {
       formData.append('min_withdraw', String(settings.min_withdraw));
       formData.append('auto_withdraw', settings.auto_withdraw ? 'true' : 'false');
       formData.append('withdraw_charge', String(settings.withdraw_charge));
+      formData.append('withdraw_start_time', settings.withdraw_start_time);
+      formData.append('withdraw_end_time', settings.withdraw_end_time);
+      formData.append('withdraw_days', settings.withdraw_days);
       
       // Append popup file if selected
       if (popupFile) {
@@ -507,6 +537,58 @@ export default function AdminSettings() {
                   <div className="text-gray-400 text-sm">Aktifkan untuk membuat penarikan otomatis ketika diterima</div>
                 </div>
               </label>
+
+              {/* Withdraw Time Settings */}
+              <div className="mt-8 border-t border-white/10 pt-8">
+                <h3 className="text-white font-semibold mb-3">Waktu Operasional Penarikan</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Jam Buka (WIB)</label>
+                    <input
+                      type="time"
+                      name="withdraw_start_time"
+                      value={settings.withdraw_start_time}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Jam Tutup (WIB)</label>
+                    <input
+                      type="time"
+                      name="withdraw_end_time"
+                      value={settings.withdraw_end_time}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <label className="block text-gray-400 text-sm mb-2">Hari Buka Penarikan</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DAYS.map(day => {
+                      const isSelected = settings.withdraw_days && settings.withdraw_days.split(',').includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => handleDaysChange(day.value)}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                            isSelected 
+                              ? 'bg-orange-500 text-white border border-orange-400' 
+                              : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
 
               {/* Preview Calculation */}
               <div className="mt-6 bg-gradient-to-r from-orange-600/10 to-red-600/10 rounded-2xl p-4 border border-orange-500/20">
