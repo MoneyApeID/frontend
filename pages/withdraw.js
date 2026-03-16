@@ -51,18 +51,20 @@ const Withdraw = () => {
       return false;
     }
 
-    // Check time
-    if (startMins <= endMins) {
-      if (currentMins < startMins || currentMins >= endMins) {
-        setIsWithdrawalAvailable(false);
-        setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
-        return false;
-      }
-    } else {
-      if (currentMins < startMins && currentMins >= endMins) {
-        setIsWithdrawalAvailable(false);
-        setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
-        return false;
+    // Check time - skip if start == end (means 24h open / no restriction)
+    if (startMins !== endMins) {
+      if (startMins < endMins) {
+        if (currentMins < startMins || currentMins >= endMins) {
+          setIsWithdrawalAvailable(false);
+          setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
+          return false;
+        }
+      } else {
+        if (currentMins < startMins && currentMins >= endMins) {
+          setIsWithdrawalAvailable(false);
+          setWithdrawalMessage(`Penarikan hanya dapat dilakukan pada pukul ${withdrawStartTime} - ${withdrawEndTime} WIB`);
+          return false;
+        }
       }
     }
 
