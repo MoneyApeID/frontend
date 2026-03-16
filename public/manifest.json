@@ -1,7 +1,7 @@
 {
-    "name": "Ciroos",
-    "short_name": "Ciroos",
-    "description": "Ciroos - Your Partnert Investment",
+    "name": "Money Rich",
+    "short_name": "Money Rich",
+    "description": "Money Rich - Your Partner Investment",
     "start_url": "/",
     "display": "standalone",
     "orientation": "portrait",
@@ -67,7 +67,7 @@
         "src": "/screenshots/screenshot-1.png",
         "sizes": "540x720",
         "type": "image/png",
-        "label": "Dashboard Ciroos"
+        "label": "Dashboard Money Rich"
       },
       {
         "src": "/screenshots/screenshot-2.png",
@@ -79,8 +79,8 @@
     "related_applications": [
       {
         "platform": "play",
-        "url": "https://play.google.com/store/apps/details?id=ca.ciroos",
-        "id": "ca.ciroos"
+        "url": "https://play.google.com/store/apps/details?id=com.vladevs.app",
+        "id": "com.vladevs.app"
       }
     ],
     "shortcuts": [
@@ -156,7 +156,7 @@
     "iarc_rating_id": "",
     "protocol_handlers": [
       {
-        "protocol": "web+ciroos",
+        "protocol": "web+moneyrich",
         "url": "/?url=%s"
       }
     ]

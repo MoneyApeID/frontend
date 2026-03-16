@@ -90,7 +90,7 @@ export default function AppInstallButton({ applicationData, className = "" }) {
       }
     } else if (deviceType.isIOS) {
       // iOS: Gunakan custom URL scheme atau fallback ke PWA
-      const customScheme = `ciroos://open`;
+      const customScheme = `moneyrich://open`;
       
       // Try custom scheme first
       const testLink = document.createElement('a');

@@ -48,11 +48,11 @@ export default function AppRedirectButton({ applicationData, className = "" }) {
   const openApp = () => {
     if (deviceType.isAndroid) {
       // Android: Gunakan intent untuk membuka aplikasi
-      const intent = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=ca.ciroos;end`;
+      const intent = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.vladevs.app;end`;
       window.location.href = intent;
     } else if (deviceType.isIOS) {
       // iOS: Gunakan custom URL scheme atau fallback ke PWA
-      const customScheme = `ciroos://${window.location.pathname}`;
+      const customScheme = `moneyrich://${window.location.pathname}`;
       
       // Try custom scheme first
       const testLink = document.createElement('a');
@@ -100,7 +100,7 @@ export default function AppRedirectButton({ applicationData, className = "" }) {
             <Icon icon="mdi:open-in-app" className="w-5 h-5 text-green-400" />
           </div>
           <h3 className="text-white font-bold text-sm">
-            {applicationData?.name || 'Ciroos'} App
+            {applicationData?.name || 'Money Rich'} App
           </h3>
         </div>
         
@@ -118,7 +118,7 @@ export default function AppRedirectButton({ applicationData, className = "" }) {
 
         <p className="text-white/40 text-[10px] mt-2 flex items-center justify-center gap-1">
           <Icon icon="mdi:information" className="w-3 h-3" />
-          Buka aplikasi Ciroos
+          Buka aplikasi Money Rich
         </p>
       </div>
     </div>

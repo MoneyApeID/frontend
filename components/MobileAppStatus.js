@@ -32,7 +32,7 @@ export default function MobileAppStatus({ applicationData, className = "" }) {
             />
           </div>
           <h3 className="text-white font-bold text-base">
-            {applicationData?.name || 'Ciroos'} Mobile App
+            {applicationData?.name || 'Money Rich'} Mobile App
           </h3>
         </div>
         
