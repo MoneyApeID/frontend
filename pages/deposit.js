@@ -79,9 +79,10 @@ const getUserSnapshotFromStorage = () => {
 };
 
 const getApplicationSnapshot = () => {
-  if (typeof window === 'undefined') return { name: 'Money Rich' };
-  const storedApp = localStorage.getItem('application');
-  if (!storedApp) return { name: 'Money Rich' };
+  if (typeof window === 'undefined') return { name: 'Money Rich', min_deposit: 10000 };
+  // Try sessionStorage first (refreshed data), then localStorage (cached data)
+  const storedApp = sessionStorage.getItem('application') || localStorage.getItem('application');
+  if (!storedApp) return { name: 'Money Rich', min_deposit: 10000 };
   try {
     const parsed = JSON.parse(storedApp);
     return {
@@ -91,7 +92,7 @@ const getApplicationSnapshot = () => {
       min_deposit: parsed.min_deposit || 10000,
     };
   } catch (error) {
-    return { name: 'Money Rich' };
+    return { name: 'Money Rich', min_deposit: 10000 };
   }
 };
 
