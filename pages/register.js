@@ -58,7 +58,7 @@ export default function Register() {
         }
       }
     }
-    
+
     if (router.query && router.query.reff) {
       setFormData((prev) => ({ ...prev, referral_code: router.query.reff }));
       setReferralLocked(true);
@@ -74,7 +74,7 @@ export default function Register() {
           healthy: parsed.healthy || false,
         });
       } catch (e) {
-      setApplicationData({ name: 'Money Rich', company: 'Money Rich Holdings', healthy: false });
+        setApplicationData({ name: 'Money Rich', company: 'Money Rich Holdings', healthy: false });
       }
     } else {
       setApplicationData({ name: 'Money Rich', company: 'Money Rich Holdings', healthy: false });
@@ -151,52 +151,52 @@ export default function Register() {
       setNotification({ message: 'Pendaftaran sedang ditutup. Silakan coba lagi nanti.', type: 'error' });
       return;
     }
-    
+
     if (formData.password !== formData.password_confirmation) {
       setNotification({ message: 'Password dan konfirmasi password tidak sama', type: 'error' });
       return;
     }
-    
+
     setIsLoading(true);
     setNotification({ message: '', type: '' });
-    
+
     try {
       const result = await registerUser(formData);
-      
+
       if (result && result.success === true) {
         const successMessage = result.message || 'Registrasi berhasil! Selamat datang.';
         setNotification({ message: successMessage, type: 'success' });
-        
-        setFormData({ 
-          name: '', 
-          number: '', 
-          password: '', 
-          password_confirmation: '', 
+
+        setFormData({
+          name: '',
+          number: '',
+          password: '',
+          password_confirmation: '',
           referral_code: referralLocked ? formData.referral_code : ''
         });
 
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('user-token-changed'));
         }
-        
+
         setTimeout(() => {
           router.push('/dashboard');
         }, 500);
-        
+
       } else if (result && result.success === false) {
         const errorMessage = result.message || 'Terjadi kesalahan. Silakan coba lagi.';
         setNotification({ message: errorMessage, type: 'error' });
       } else {
         setNotification({ message: 'Respon server tidak valid. Silakan coba lagi.', type: 'error' });
       }
-      
+
     } catch (error) {
       console.error('Register error:', error);
-      
+
       if (error.response) {
         const statusCode = error.response.status;
         const responseData = error.response.data;
-        
+
         if (statusCode >= 400 && statusCode < 500) {
           const errorMessage = responseData?.message || 'Data yang dimasukkan tidak valid';
           setNotification({ message: errorMessage, type: 'error' });
@@ -242,7 +242,7 @@ export default function Register() {
         <meta name="description" content={`${applicationData?.name || 'Money Rich'} registration`} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      
+
       <div className="min-h-screen flex items-center justify-center bg-brand-black text-white relative overflow-hidden py-12">
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,193,82,0.18),rgba(5,6,8,0.95))]"></div>
@@ -253,7 +253,7 @@ export default function Register() {
 
             {/* Main Content */}
             <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-16 items-start">
-              
+
               {/* Left Side - Info Highlights */}
               <div className="hidden lg:flex flex-col space-y-6">
                 <div className="bg-brand-surface/80 border border-white/10 rounded-3xl p-6 shadow-[0_0_35px_rgba(232,193,82,0.12)]">
@@ -277,29 +277,29 @@ export default function Register() {
                         <Icon icon="mdi:cash-multiple" className="w-5 h-5" />
                       </div>
                       <h4 className="text-sm font-semibold text-white">Bonus Pendaftaran</h4>
-                      </div>
+                    </div>
                     <p className="text-xs text-white/55">
                       Raih welcome bonus eksklusif ketika menyelesaikan registrasi dan deposit pertama.
                     </p>
-                    </div>
+                  </div>
                   <div className="bg-brand-surface/75 border border-white/10 rounded-3xl p-5 shadow-[0_0_35px_rgba(232,193,82,0.12)]">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-xl bg-brand-emerald/15 border border-brand-emerald/25 flex items-center justify-center text-brand-emerald">
                         <Icon icon="mdi:account-supervisor" className="w-5 h-5" />
                       </div>
                       <h4 className="text-sm font-semibold text-white">Program Referral</h4>
-                      </div>
+                    </div>
                     <p className="text-xs text-white/55">
                       Ajak teman dan dapatkan komisi berlapis dari setiap investasi yang mereka lakukan.
                     </p>
-                    </div>
+                  </div>
                   <div className="bg-brand-surface/75 border border-white/10 rounded-3xl p-5 shadow-[0_0_35px_rgba(232,193,82,0.12)] sm:col-span-2">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-xl bg-brand-gold/15 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
                         <Icon icon="mdi:shield-star" className="w-5 h-5" />
                       </div>
                       <h4 className="text-sm font-semibold text-white">Akses Premium</h4>
-                      </div>
+                    </div>
                     <p className="text-xs text-white/55 leading-relaxed">
                       Dapatkan rekomendasi strategi, analitik real-time, dan dukungan concierge tanpa batas.
                     </p>
@@ -329,33 +329,33 @@ export default function Register() {
                 <div className="relative">
                   <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-br from-brand-gold/30 via-transparent to-brand-gold/20 blur-3xl opacity-70"></div>
                   <div className="relative rounded-[26px] border border-white/10 bg-brand-surface/95 backdrop-blur-xl p-8 lg:p-10 shadow-brand-glow">
-                  
-                  {/* Logo + Form Header */}
+
+                    {/* Logo + Form Header */}
                     <div className="text-center mb-8 space-y-2">
                       <div className="hidden lg:flex justify-center">
-                    <div className="relative mb-6">
+                        <div className="relative mb-6">
                           <div className="absolute -inset-2 bg-gradient-to-r from-[#E8C152]/30 to-[#4CD6C4]/30 blur-xl rounded-full"></div>
-                      <div className="relative w-32 h-32 mx-auto">
-                        <Image
+                          <div className="relative w-32 h-32 mx-auto">
+                            <Image
                               src="/logo.svg"
                               alt="Money Rich Logo"
                               className="w-full h-full object-contain drop-shadow-[0_0_25px_rgba(232,193,82,0.6)]"
-                          width={128}
-                          height={128}
-                          priority
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            const fallback = e.target.nextSibling;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
+                              width={128}
+                              height={128}
+                              priority
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                const fallback = e.target.nextSibling;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
                             <div style={{ display: 'none' }} className="w-32 h-32 bg-gradient-to-br from-brand-gold to-brand-emerald rounded-3xl flex items-center justify-center shadow-2xl border-2 border-white/20">
                               <Icon icon="mdi:alpha-m-circle" className="text-white w-20 h-20" />
                             </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
+
                       <div className="lg:hidden flex flex-col items-center gap-3">
                         <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-brand-surface border border-white/10 flex items-center justify-center shadow-brand-glow">
                           {!logoError ? (
@@ -377,382 +377,380 @@ export default function Register() {
 
                       <h2 className="text-3xl font-bold text-white">Buat Akun Money Rich</h2>
                       <p className="text-white/60 text-sm">Langkah pertama menuju investasi eksklusif</p>
-                  </div>
-
-                  {/* Notification */}
-                  {notification.message && (
-                    <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-medium flex items-start gap-3 animate-shake backdrop-blur-sm border ${
-                      notification.type === 'success'
-                        ? 'bg-green-500/20 text-green-300 border-green-400/30'
-                        : 'bg-red-500/20 text-red-300 border-red-400/30'
-                    }`}>
-                      <Icon 
-                        icon={notification.type === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'} 
-                        className="w-5 h-5 flex-shrink-0 mt-0.5" 
-                      />
-                      <span className="flex-1">{notification.message}</span>
-                    </div>
-                  )}
-
-                  {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    
-                    {/* Name Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="name" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
-                        <Icon icon="mdi:account" className="w-4 h-4 text-[#E8C152]" />
-                        Nama Lengkap
-                      </label>
-                      <div className="relative group">
-                        <div className="brand-input">
-                          <div className="flex items-center px-4 py-4 shrink-0">
-                            <Icon icon="mdi:account-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
-                          </div>
-                          <input
-                            type="text"
-                            id="name"
-                            className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
-                            placeholder="Masukkan nama lengkap Anda"
-                            value={formData.name}
-                            onChange={handleChange}
-                            required
-                            autoComplete="name"
-                          />
-                          <div className="flex items-center px-4 py-4 shrink-0">
-                            {formValidation.name ? (
-                              <Icon icon="mdi:check-circle" className="w-5 h-5 text-[#E8C152]" />
-                            ) : (
-                              <Icon icon="mdi:account-outline" className="w-5 h-5 text-[#D8CFB6]/20" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Phone Number Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="number" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
-                        <Icon icon="mdi:phone" className="w-4 h-4 text-[#E8C152]" />
-                        Nomor HP
-                      </label>
-                      <div className="relative group">
-                        <div className="brand-input">
-                          <div className="flex items-center shrink-0 px-4 py-4 border-r border-white/5">
-                            <Icon icon="flag:id-4x3" className="w-6 h-6 mr-2 shrink-0" />
-                            <span className="text-[#D8CFB6] text-sm font-semibold whitespace-nowrap">+62</span>
-                          </div>
-                          <input
-                            type="tel"
-                            id="number"
-                            className="brand-input-field px-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
-                            placeholder="8xxxxxxxxxxx"
-                            value={formData.number}
-                            onChange={handleNumberChange}
-                            required
-                            autoComplete="username"
-                          />
-                          <div className="flex items-center shrink-0 px-4">
-                            {formValidation.number ? (
-                              <Icon icon="mdi:check-circle" className="w-5 h-5 shrink-0 text-[#E8C152]" />
-                            ) : (
-                              <Icon icon="mdi:phone-outline" className="w-5 h-5 shrink-0 text-[#D8CFB6]/20" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Password Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="password" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
-                        <Icon icon="mdi:lock" className="w-4 h-4 text-[#E8C152]" />
-                        Password
-                      </label>
-                      <div className="relative group">
-                        <div className="brand-input">
-                          <div className="flex items-center px-4 py-4">
-                            <Icon icon="mdi:lock-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
-                          </div>
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
-                            placeholder="Buat password yang kuat"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            autoComplete="new-password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="flex items-center px-4 py-4 text-[#D8CFB6]/50 hover:text-[#F7F3E5] transition-colors flex-shrink-0"
-                          >
-                            <Icon 
-                              icon={showPassword ? "mdi:eye-off" : "mdi:eye"} 
-                              className="w-5 h-5" 
-                            />
-                          </button>
-                        </div>
-                        {/* Password Strength */}
-                        {formData.password && (
-                          <div className="mt-2 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-gray-600/30 rounded-full h-2 overflow-hidden">
-                                <div 
-                                  className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
-                                  style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                                ></div>
-                              </div>
-                              <span className={`text-xs font-medium ${getPasswordStrengthColor().replace('bg-', 'text-')}`}>
-                                {getPasswordStrengthText()}
-                              </span>
-                            </div>
-                            <div className="text-xs text-[#D8CFB6]/60 flex items-center gap-2">
-                              <Icon 
-                                icon={formData.password.length >= 6 ? "mdi:check" : "mdi:close"} 
-                                className={`w-3 h-3 ${formData.password.length >= 6 ? 'text-[#E8C152]' : 'text-red-400'}`} 
-                              />
-                              <span>Minimal 6 karakter</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Confirm Password Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="password_confirmation" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
-                        <Icon icon="mdi:lock-check" className="w-4 h-4 text-[#E8C152]" />
-                        Konfirmasi Password
-                      </label>
-                      <div className="relative group">
-                        <div className="brand-input">
-                          <div className="flex items-center px-4 py-4 shrink-0">
-                            <Icon icon="mdi:lock-check-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
-                          </div>
-                          <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            id="password_confirmation"
-                            className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
-                            placeholder="Ulangi password Anda"
-                            value={formData.password_confirmation}
-                            onChange={handleChange}
-                            required
-                            autoComplete="new-password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="flex items-center px-4 py-4 text-[#D8CFB6]/50 hover:text-[#F7F3E5] transition-colors shrink-0"
-                          >
-                            <Icon 
-                              icon={showConfirmPassword ? "mdi:eye-off" : "mdi:eye"} 
-                              className="w-5 h-5" 
-                            />
-                          </button>
-                        </div>
-                        {formData.password_confirmation && formData.password.length >= 6 && formData.password_confirmation !== formData.password && (
-                          <div className="text-xs text-red-400 flex items-center gap-2 mt-2">
-                            <Icon icon="mdi:close-circle" className="w-3 h-3" />
-                            <span>Password tidak sama</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Referral Code Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="referral_code" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
-                        <Icon icon="mdi:gift-outline" className="w-4 h-4 text-[#E8C152]" />
-                        Kode Referral <span className="text-[#D8CFB6]/40 text-xs font-normal">(Opsional)</span>
-                      </label>
-                      <div className="relative group">
-                        <div className={`brand-input ${referralLocked ? 'opacity-75' : ''}`}>
-                          <div className="flex items-center px-4 py-4 shrink-0">
-                            <Icon icon="mdi:gift-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
-                          </div>
-                          <input
-                            type="text"
-                            id="referral_code"
-                            className={`brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium ${referralLocked ? 'cursor-not-allowed' : ''}`}
-                            placeholder="Masukkan kode referral"
-                            value={formData.referral_code}
-                            onChange={handleChange}
-                            disabled={referralLocked}
-
-                          />
-                          <div className="flex items-center px-4 py-4 shrink-0">
-                            {referralLocked ? (
-                              <Icon icon="mdi:lock" className="w-5 h-5 text-yellow-400" />
-                            ) : formData.referral_code ? (
-                              <Icon icon="mdi:gift" className="w-5 h-5 text-[#E8C152]" />
-                            ) : (
-                              <Icon icon="mdi:gift-outline" className="w-5 h-5 text-[#D8CFB6]/20" />
-                            )}
-                          </div>
-                        </div>
-                        {referralLocked && (
-                          <div className="text-xs text-[#E8C152] flex items-center gap-1 mt-2">
-                            <Icon icon="mdi:information" className="w-4 h-4" />
-                            Kode referral dari link undangan, tidak dapat diubah
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Terms Agreement Checkbox */}
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
-                      <label className="flex items-start gap-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={termsAgreed}
-                          onChange={(e) => setTermsAgreed(e.target.checked)}
-                          className="w-5 h-5 rounded border-2 border-white/30 bg-transparent checked:bg-[#E8C152] checked:border-[#E8C152] focus:ring-2 focus:ring-[#E8C152]/50 focus:ring-offset-0 cursor-pointer mt-0.5 flex-shrink-0"
+                    {/* Notification */}
+                    {notification.message && (
+                      <div className={`mb-6 px-5 py-4 rounded-2xl text-sm font-medium flex items-start gap-3 animate-shake backdrop-blur-sm border ${notification.type === 'success'
+                          ? 'bg-green-500/20 text-green-300 border-green-400/30'
+                          : 'bg-red-500/20 text-red-300 border-red-400/30'
+                        }`}>
+                        <Icon
+                          icon={notification.type === 'success' ? 'mdi:check-circle' : 'mdi:alert-circle'}
+                          className="w-5 h-5 flex-shrink-0 mt-0.5"
                         />
-                        <span className="text-xs text-[#D8CFB6]/70">
-                          Saya telah membaca dan menyetujui{' '}
-                          <Link
-                            href="/privacy-policy"
-                            passHref
-                            legacyBehavior
-                          >
-                            <a className="text-[#E8C152] hover:text-[#B9891F] font-semibold cursor-pointer underline">
-                              Kebijakan Privasi
-                            </a>
-                          </Link>
-                          {' '}dan{' '}
-                          <Link
-                            href="/terms-and-conditions"
-                            passHref
-                            legacyBehavior
-                          >
-                            <a className="text-[#E8C152] hover:text-[#B9891F] font-semibold cursor-pointer underline">
-                              Syarat & Ketentuan
-                            </a>
-                          </Link>
-                          .
-                        </span>
-                      </label>
-                    </div>
+                        <span className="flex-1">{notification.message}</span>
+                      </div>
+                    )}
 
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      className={`w-full font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg border relative overflow-hidden mt-8 ${
-                        (!maintenanceMode && !closedRegister && isFormValid)
-                          ? 'bg-gradient-to-r from-[#E8C152] to-[#B9891F] hover:from-[#f0d470] hover:to-[#e0b94a] text-white border-[#E8C152]/30 hover:shadow-[0_0_40px_rgba(232,193,82,0.5)] hover:scale-[1.02] active:scale-[0.98]'
-                          : 'bg-gray-600/20 text-gray-500 cursor-not-allowed border-gray-600/10'
-                      }`}
-                      disabled={isLoading || !isFormValid || maintenanceMode || closedRegister}
-                    >
-                      {isLoading ? (
-                        <>
-                          <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
-                          <span>Sedang Mendaftar...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Icon icon="mdi:account-plus" className="w-5 h-5" />
-                          <span>Daftar Sekarang</span>
-                          <Icon icon="mdi:arrow-right" className="w-5 h-5" />
-                        </>
-                      )}
-                    </button>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-5">
 
-                    {/* Form Validation Summary */}
-                    {!isFormValid && (
-                      <div className="bg-orange-500/10 border border-orange-400/30 rounded-xl p-4 text-sm">
-                        <div className="flex items-center gap-2 text-orange-300 mb-2">
-                          <Icon icon="mdi:alert-circle" className="w-4 h-4" />
-                          <span className="font-semibold">Lengkapi formulir:</span>
+                      {/* Name Field */}
+                      <div className="space-y-2">
+                        <label htmlFor="name" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
+                          <Icon icon="mdi:account" className="w-4 h-4 text-[#E8C152]" />
+                          Nama Lengkap
+                        </label>
+                        <div className="relative group">
+                          <div className="brand-input">
+                            <div className="flex items-center px-4 py-4 shrink-0">
+                              <Icon icon="mdi:account-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
+                            </div>
+                            <input
+                              type="text"
+                              id="name"
+                              className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
+                              placeholder="Masukkan nama lengkap Anda"
+                              value={formData.name}
+                              onChange={handleChange}
+                              required
+                              autoComplete="name"
+                            />
+                            <div className="flex items-center px-4 py-4 shrink-0">
+                              {formValidation.name ? (
+                                <Icon icon="mdi:check-circle" className="w-5 h-5 text-[#E8C152]" />
+                              ) : (
+                                <Icon icon="mdi:account-outline" className="w-5 h-5 text-[#D8CFB6]/20" />
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-1 text-orange-200 text-xs">
-                          {!formValidation.name && (
-                            <div className="flex items-center gap-2">
-                              <Icon icon="mdi:circle-small" className="w-3 h-3" />
-                              <span>Nama minimal 3 karakter</span>
+                      </div>
+
+                      {/* Phone Number Field */}
+                      <div className="space-y-2">
+                        <label htmlFor="number" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
+                          <Icon icon="mdi:phone" className="w-4 h-4 text-[#E8C152]" />
+                          Nomor HP
+                        </label>
+                        <div className="relative group">
+                          <div className="brand-input">
+                            <div className="flex items-center shrink-0 px-4 py-4 border-r border-white/5">
+                              <Icon icon="flag:id-4x3" className="w-6 h-6 mr-2 shrink-0" />
+                              <span className="text-[#D8CFB6] text-sm font-semibold whitespace-nowrap">+62</span>
+                            </div>
+                            <input
+                              type="tel"
+                              id="number"
+                              className="brand-input-field px-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
+                              placeholder="8xxxxxxxxxxx"
+                              value={formData.number}
+                              onChange={handleNumberChange}
+                              required
+                              autoComplete="username"
+                            />
+                            <div className="flex items-center shrink-0 px-4">
+                              {formValidation.number ? (
+                                <Icon icon="mdi:check-circle" className="w-5 h-5 shrink-0 text-[#E8C152]" />
+                              ) : (
+                                <Icon icon="mdi:phone-outline" className="w-5 h-5 shrink-0 text-[#D8CFB6]/20" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Password Field */}
+                      <div className="space-y-2">
+                        <label htmlFor="password" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
+                          <Icon icon="mdi:lock" className="w-4 h-4 text-[#E8C152]" />
+                          Password
+                        </label>
+                        <div className="relative group">
+                          <div className="brand-input">
+                            <div className="flex items-center px-4 py-4">
+                              <Icon icon="mdi:lock-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
+                            </div>
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              id="password"
+                              className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
+                              placeholder="Buat password yang kuat"
+                              value={formData.password}
+                              onChange={handleChange}
+                              required
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="flex items-center px-4 py-4 text-[#D8CFB6]/50 hover:text-[#F7F3E5] transition-colors flex-shrink-0"
+                            >
+                              <Icon
+                                icon={showPassword ? "mdi:eye-off" : "mdi:eye"}
+                                className="w-5 h-5"
+                              />
+                            </button>
+                          </div>
+                          {/* Password Strength */}
+                          {formData.password && (
+                            <div className="mt-2 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-gray-600/30 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className={`text-xs font-medium ${getPasswordStrengthColor().replace('bg-', 'text-')}`}>
+                                  {getPasswordStrengthText()}
+                                </span>
+                              </div>
+                              <div className="text-xs text-[#D8CFB6]/60 flex items-center gap-2">
+                                <Icon
+                                  icon={formData.password.length >= 6 ? "mdi:check" : "mdi:close"}
+                                  className={`w-3 h-3 ${formData.password.length >= 6 ? 'text-[#E8C152]' : 'text-red-400'}`}
+                                />
+                                <span>Minimal 6 karakter</span>
+                              </div>
                             </div>
                           )}
-                          {!formValidation.number && (
-                            <div className="flex items-center gap-2">
-                              <Icon icon="mdi:circle-small" className="w-3 h-3" />
-                              <span>Nomor HP 9-12 digit, awalan 8</span>
+                        </div>
+                      </div>
+
+                      {/* Confirm Password Field */}
+                      <div className="space-y-2">
+                        <label htmlFor="password_confirmation" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
+                          <Icon icon="mdi:lock-check" className="w-4 h-4 text-[#E8C152]" />
+                          Konfirmasi Password
+                        </label>
+                        <div className="relative group">
+                          <div className="brand-input">
+                            <div className="flex items-center px-4 py-4 shrink-0">
+                              <Icon icon="mdi:lock-check-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
                             </div>
-                          )}
-                          {!formValidation.password && (
-                            <div className="flex items-center gap-2">
-                              <Icon icon="mdi:circle-small" className="w-3 h-3" />
-                              <span>Password minimal 6 karakter</span>
-                            </div>
-                          )}
-                          {!formValidation.passwordMatch && formData.password_confirmation && formData.password.length >= 6 && (
-                            <div className="flex items-center gap-2">
-                              <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              id="password_confirmation"
+                              className="brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium"
+                              placeholder="Ulangi password Anda"
+                              value={formData.password_confirmation}
+                              onChange={handleChange}
+                              required
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="flex items-center px-4 py-4 text-[#D8CFB6]/50 hover:text-[#F7F3E5] transition-colors shrink-0"
+                            >
+                              <Icon
+                                icon={showConfirmPassword ? "mdi:eye-off" : "mdi:eye"}
+                                className="w-5 h-5"
+                              />
+                            </button>
+                          </div>
+                          {formData.password_confirmation && formData.password.length >= 6 && formData.password_confirmation !== formData.password && (
+                            <div className="text-xs text-red-400 flex items-center gap-2 mt-2">
+                              <Icon icon="mdi:close-circle" className="w-3 h-3" />
                               <span>Password tidak sama</span>
                             </div>
                           )}
-                          {!formValidation.referralCode && (
-                            <div className="flex items-center gap-2">
-                              <Icon icon="mdi:circle-small" className="w-3 h-3" />
-                              <span>Kode referral wajib diisi</span>
+                        </div>
+                      </div>
+
+                      {/* Referral Code Field */}
+                      <div className="space-y-2">
+                        <label htmlFor="referral_code" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
+                          <Icon icon="mdi:gift-outline" className="w-4 h-4 text-[#E8C152]" />
+                          Kode Referral
+                        </label>
+                        <div className="relative group">
+                          <div className={`brand-input ${referralLocked ? 'opacity-75' : ''}`}>
+                            <div className="flex items-center px-4 py-4 shrink-0">
+                              <Icon icon="mdi:gift-outline" className="text-[#D8CFB6]/50 w-5 h-5" />
+                            </div>
+                            <input
+                              type="text"
+                              id="referral_code"
+                              className={`brand-input-field px-2 py-4 text-[#F7F3E5] placeholder-[#D8CFB6]/40 text-sm font-medium ${referralLocked ? 'cursor-not-allowed' : ''}`}
+                              placeholder="Masukkan kode referral"
+                              value={formData.referral_code}
+                              onChange={handleChange}
+                              disabled={referralLocked}
+                              required
+                            />
+                            <div className="flex items-center px-4 py-4 shrink-0">
+                              {referralLocked ? (
+                                <Icon icon="mdi:lock" className="w-5 h-5 text-yellow-400" />
+                              ) : formData.referral_code ? (
+                                <Icon icon="mdi:gift" className="w-5 h-5 text-[#E8C152]" />
+                              ) : (
+                                <Icon icon="mdi:gift-outline" className="w-5 h-5 text-[#D8CFB6]/20" />
+                              )}
+                            </div>
+                          </div>
+                          {referralLocked && (
+                            <div className="text-xs text-[#E8C152] flex items-center gap-1 mt-2">
+                              <Icon icon="mdi:information" className="w-4 h-4" />
+                              Kode referral dari link undangan, tidak dapat diubah
                             </div>
                           )}
                         </div>
                       </div>
-                    )}
-                  </form>
 
-                  {/* Divider */}
-                  <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/10"></div>
-                    </div>
-                                    <div className="relative flex justify-center">
-                                        <span className="px-4 text-xs uppercase tracking-[0.3em] text-white/40 bg-brand-surface">
-                                            atau
-                                        </span>
-                    </div>
-                  </div>
-
-                  {/* Login Link */}
-                  <div className="text-center space-y-3">
-                    <p className="text-sm text-white/55">Sudah punya akun?</p>
-                    <Link href="/login" passHref legacyBehavior>
-                    <a className="inline-flex items-center gap-2 rounded-xl border border-brand-gold/30 bg-brand-gold/10 px-6 py-3 font-semibold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-colors duration-200 cursor-pointer border border-white/10 hover:border-[#F45D16]/30">
-                        <Icon icon="mdi:login" className="w-5 h-5" />
-                        Login Sekarang
-                        <Icon icon="mdi:arrow-right" className="w-4 h-4" />
-                      </a>
-                    </Link>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-
-            {/* Bottom Copyright */}
-            <footer className="mt-24 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-white/40">
-                        <div className="flex items-center gap-2">
-                            <Copyright />
-              </div>
-                        <div className="flex items-center gap-3">
-                            <Link href="/privacy-policy" className="hover:text-brand-gold transition-colors">
+                      {/* Terms Agreement Checkbox */}
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={termsAgreed}
+                            onChange={(e) => setTermsAgreed(e.target.checked)}
+                            className="w-5 h-5 rounded border-2 border-white/30 bg-transparent checked:bg-[#E8C152] checked:border-[#E8C152] focus:ring-2 focus:ring-[#E8C152]/50 focus:ring-offset-0 cursor-pointer mt-0.5 flex-shrink-0"
+                          />
+                          <span className="text-xs text-[#D8CFB6]/70">
+                            Saya telah membaca dan menyetujui{' '}
+                            <Link
+                              href="/privacy-policy"
+                              passHref
+                              legacyBehavior
+                            >
+                              <a className="text-[#E8C152] hover:text-[#B9891F] font-semibold cursor-pointer underline">
                                 Kebijakan Privasi
+                              </a>
                             </Link>
-                            <span>•</span>
-                            <Link href="/terms-and-conditions" className="hover:text-brand-gold transition-colors">
+                            {' '}dan{' '}
+                            <Link
+                              href="/terms-and-conditions"
+                              passHref
+                              legacyBehavior
+                            >
+                              <a className="text-[#E8C152] hover:text-[#B9891F] font-semibold cursor-pointer underline">
                                 Syarat & Ketentuan
+                              </a>
                             </Link>
+                            .
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        className={`w-full font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg border relative overflow-hidden mt-8 ${(!maintenanceMode && !closedRegister && isFormValid)
+                            ? 'bg-gradient-to-r from-[#E8C152] to-[#B9891F] hover:from-[#f0d470] hover:to-[#e0b94a] text-white border-[#E8C152]/30 hover:shadow-[0_0_40px_rgba(232,193,82,0.5)] hover:scale-[1.02] active:scale-[0.98]'
+                            : 'bg-gray-600/20 text-gray-500 cursor-not-allowed border-gray-600/10'
+                          }`}
+                        disabled={isLoading || !isFormValid || maintenanceMode || closedRegister}
+                      >
+                        {isLoading ? (
+                          <>
+                            <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+                            <span>Sedang Mendaftar...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon icon="mdi:account-plus" className="w-5 h-5" />
+                            <span>Daftar Sekarang</span>
+                            <Icon icon="mdi:arrow-right" className="w-5 h-5" />
+                          </>
+                        )}
+                      </button>
+
+                      {/* Form Validation Summary */}
+                      {!isFormValid && (
+                        <div className="bg-orange-500/10 border border-orange-400/30 rounded-xl p-4 text-sm">
+                          <div className="flex items-center gap-2 text-orange-300 mb-2">
+                            <Icon icon="mdi:alert-circle" className="w-4 h-4" />
+                            <span className="font-semibold">Lengkapi formulir:</span>
+                          </div>
+                          <div className="space-y-1 text-orange-200 text-xs">
+                            {!formValidation.name && (
+                              <div className="flex items-center gap-2">
+                                <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                                <span>Nama minimal 3 karakter</span>
+                              </div>
+                            )}
+                            {!formValidation.number && (
+                              <div className="flex items-center gap-2">
+                                <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                                <span>Nomor HP 9-12 digit, awalan 8</span>
+                              </div>
+                            )}
+                            {!formValidation.password && (
+                              <div className="flex items-center gap-2">
+                                <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                                <span>Password minimal 6 karakter</span>
+                              </div>
+                            )}
+                            {!formValidation.passwordMatch && formData.password_confirmation && formData.password.length >= 6 && (
+                              <div className="flex items-center gap-2">
+                                <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                                <span>Password tidak sama</span>
+                              </div>
+                            )}
+                            {!formValidation.referralCode && (
+                              <div className="flex items-center gap-2">
+                                <Icon icon="mdi:circle-small" className="w-3 h-3" />
+                                <span>Kode referral wajib diisi</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </form>
+
+                    {/* Divider */}
+                    <div className="relative my-8">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-white/10"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="px-4 text-xs uppercase tracking-[0.3em] text-white/40 bg-brand-surface">
+                          atau
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Login Link */}
+                    <div className="text-center space-y-3">
+                      <p className="text-sm text-white/55">Sudah punya akun?</p>
+                      <Link href="/login" passHref legacyBehavior>
+                        <a className="inline-flex items-center gap-2 rounded-xl border border-brand-gold/30 bg-brand-gold/10 px-6 py-3 font-semibold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-colors duration-200 cursor-pointer border border-white/10 hover:border-[#F45D16]/30">
+                          <Icon icon="mdi:login" className="w-5 h-5" />
+                          Login Sekarang
+                          <Icon icon="mdi:arrow-right" className="w-4 h-4" />
+                        </a>
+                      </Link>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Bottom Copyright */}
+              <footer className="mt-24 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-white/40">
+                <div className="flex items-center gap-2">
+                  <Copyright />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Link href="/privacy-policy" className="hover:text-brand-gold transition-colors">
+                    Kebijakan Privasi
+                  </Link>
+                  <span>•</span>
+                  <Link href="/terms-and-conditions" className="hover:text-brand-gold transition-colors">
+                    Syarat & Ketentuan
+                  </Link>
+                </div>
+              </footer>
+
             </div>
-                    </footer>
-
           </div>
-        </div>
 
-        {/* eslint-disable react/no-unknown-property */}
-        <style jsx global>{`
+          {/* eslint-disable react/no-unknown-property */}
+          <style jsx global>{`
           .brand-input {
             display: flex;
             align-items: center;
@@ -784,8 +782,8 @@ export default function Register() {
             color: rgba(255, 255, 255, 0.35);
           }
         `}</style>
-        {/* eslint-enable react/no-unknown-property */}
-      </div>
+          {/* eslint-enable react/no-unknown-property */}
+        </div>
       </div>
     </>
   );
