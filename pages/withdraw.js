@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Icon } from '@iconify/react';
-import { getBankAccounts, withdrawUser } from '../utils/api';
+import { getBankAccounts, withdrawUser, getUserInfo } from '../utils/api';
 import BottomNavbar from '../components/BottomNavbar';  
 import Copyright from '../components/copyright';
 
@@ -86,6 +86,7 @@ const Withdraw = () => {
         return;
     }
 
+    // Load from localStorage first (fast initial paint)
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     if (userStr) {
         try {
@@ -110,7 +111,6 @@ const Withdraw = () => {
             if (appConfig.withdraw_start_time) setWithdrawStartTime(appConfig.withdraw_start_time);
             if (appConfig.withdraw_end_time) setWithdrawEndTime(appConfig.withdraw_end_time);
             if (appConfig.withdraw_days) setWithdrawDays(appConfig.withdraw_days);
-            
             setApplicationData({
                 name: appConfig.name || 'Money Rich',
                 healthy: appConfig.healthy || false,
@@ -118,11 +118,39 @@ const Withdraw = () => {
             });
         } catch (e) {
             console.error("Failed to parse application data from localStorage", e);
-            setApplicationData({ name: 'Money Rich', healthy: false, company: 'Money Rich Holdings' });
         }
     }
 
     setPageLoading(false);
+
+    // Then fetch fresh data from API to ensure settings are up-to-date
+    getUserInfo().then(res => {
+      if (res?.success && res?.data) {
+        const { user, application } = res.data;
+        if (user) {
+          setUserData({
+            name: user.name || 'Tester',
+            number: user.number || '',
+            income: user.income || 0,
+          });
+          try { localStorage.setItem('user', JSON.stringify(user)); } catch(e) {}
+        }
+        if (application) {
+          if (application.min_withdraw) setMinWithdraw(Number(application.min_withdraw));
+          if (application.max_withdraw) setMaxWithdraw(Number(application.max_withdraw));
+          if (application.withdraw_charge) setFee(Number(application.withdraw_charge));
+          if (application.withdraw_start_time) setWithdrawStartTime(application.withdraw_start_time);
+          if (application.withdraw_end_time) setWithdrawEndTime(application.withdraw_end_time);
+          if (application.withdraw_days) setWithdrawDays(application.withdraw_days);
+          setApplicationData({
+            name: application.name || 'Money Rich',
+            healthy: application.healthy || false,
+            company: application.company || 'Money Rich Holdings',
+          });
+          try { localStorage.setItem('application', JSON.stringify(application)); } catch(e) {}
+        }
+      }
+    }).catch(e => console.error('Failed to fetch fresh user info:', e));
   }, [router]);
 
   useEffect(() => {
