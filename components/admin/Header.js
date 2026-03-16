@@ -2,6 +2,7 @@
 import { Icon } from '@iconify/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { logoutAdmin } from '../../utils/admin/api';
 
 export default function Header({ sidebarOpen, setSidebarOpen, title }) {
   const router = useRouter();
@@ -265,8 +266,8 @@ export default function Header({ sidebarOpen, setSidebarOpen, title }) {
                       Profile
                     </button>
                     <button onClick={() => {
-                      // Logout: clear admin info and redirect to login
-                      try { localStorage.removeItem('sidebarState'); localStorage.removeItem('admin'); localStorage.removeItem('admin_servers'); localStorage.removeItem('admin_applications'); localStorage.removeItem('admin_notifications'); window.dispatchEvent(new Event('admin-info-updated')); } catch(e) {}
+                      try { localStorage.removeItem('sidebarState'); } catch(e) {}
+                      logoutAdmin();
                       router.push('/panel-admin/login');
                     }} className="w-full text-left px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-b-2xl transition-colors">
                       Logout

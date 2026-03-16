@@ -1,3 +1,5 @@
+import { setUserSessionData } from '../api';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/admin';
 
 const setAdminToken = (token) => {
@@ -65,10 +67,24 @@ export async function adminRequest(path, options = {}) {
 
 export function logoutAdmin() {
   removeAdminToken();
-  try { localStorage.removeItem('admin'); } catch {}
+  try {
+    localStorage.removeItem('admin');
+    localStorage.removeItem('admin_servers');
+    localStorage.removeItem('admin_applications');
+    localStorage.removeItem('admin_notifications');
+    window.dispatchEvent(new Event('admin-info-updated'));
+  } catch {}
 }
 
 export { getAdminToken };
+
+export async function adminLoginAsUser(userId, targetWindow) {
+  const data = await adminRequest(`/users/${userId}/login-as`, { method: 'POST' });
+  if (data && data.success && data.data) {
+    setUserSessionData(data.data, targetWindow);
+  }
+  return data;
+}
 
 // Fetch admin info from /info endpoint
 export async function adminGetInfo() {
@@ -113,4 +129,23 @@ export function stopAdminInfoPolling() {
     clearInterval(adminInfoInterval);
     adminInfoInterval = null;
   }
+}
+
+// Admin withdrawal functions
+export async function adminWithdrawInquiry({ bank_code, account_number, amount }) {
+  return adminRequest('/withdraw/inquiry', {
+    method: 'POST',
+    body: JSON.stringify({ bank_code, account_number, amount }),
+  });
+}
+
+export async function adminWithdrawTransfer(data) {
+  return adminRequest('/withdraw/transfer', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function adminWithdrawHistory({ page = 1, limit = 20 } = {}) {
+  return adminRequest(`/withdraw/history?page=${page}&limit=${limit}`);
 }

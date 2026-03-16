@@ -12,23 +12,42 @@ export default function VIPPage() {
   const [applicationData, setApplicationData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Hanya 2 level: Level 1 (default) dan Level 2 (minimal 10K investasi)
+  // Harus match dengan backend calculateVIPLevel (investment.go)
   const VIP_THRESHOLDS = {
-    1: 0,        // Level 1 adalah default untuk user baru
-    2: 10000,    // Minimal 10K investasi untuk naik ke Level 2
+    0: 0,
+    1: 50000,
+    2: 1200000,
+    3: 10000000,
+    4: 30000000,
+    5: 150000000,
   };
 
   const VIP_BENEFITS = {
+    0: [
+      'Akses produk tanpa syarat VIP',
+      'Investasi di kategori Neura',
+    ],
     1: [
-      'Akses produk VIP 1',
-      'Investasi tanpa batas di produk VIP 1',
-      'Profit sesuai produk yang dipilih'
+      'Semua benefit VIP 0',
+      'Akses produk Finora 1',
     ],
     2: [
       'Semua benefit VIP 1',
-      'Akses produk semua produk VIP',
-      'Investasi tanpa batas di semua produk tersedia',
-    ]
+      'Akses produk Finora 2',
+    ],
+    3: [
+      'Semua benefit VIP 2',
+      'Akses produk Finora 3 & semua Corex',
+    ],
+    4: [
+      'Semua benefit VIP 3',
+      'Akses produk Finora 4',
+    ],
+    5: [
+      'Semua benefit VIP 4',
+      'Akses produk Finora 5',
+      'Akses semua produk eksklusif',
+    ],
   };
 
   useEffect(() => {
@@ -42,86 +61,121 @@ export default function VIPPage() {
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const app = JSON.parse(localStorage.getItem('application') || '{}');
-    
-    // Default level adalah 1 untuk user baru
+
     setUserData({
       name: user.name || 'User',
-      level: user.level || 1,  // Default level 1
+      level: user.level ?? 0,
       total_invest_vip: user.total_invest_vip || 0,
       total_invest: user.total_invest || 0,
       balance: user.balance || 0
     });
-    
+
     setApplicationData({
       name: app.name || 'Money Rich',
       company: app.company || 'Money Rich Holdings'
     });
-    
+
     setLoading(false);
   }, [router]);
 
   const getVIPProgress = () => {
     const totalVIP = userData?.total_invest_vip || 0;
-    const currentLevel = userData?.level || 1;
+    const currentLevel = userData?.level ?? 0;
     const nextLevel = currentLevel + 1;
-    
-    // Jika sudah level 2 (maksimal), tidak ada next level
-    if (currentLevel >= 2) {
-      return { 
-        current: currentLevel, 
-        next: null, 
-        progress: 100, 
-        remaining: 0, 
-        nextThreshold: 0 
+
+    // Sudah level 5 (maksimal)
+    if (currentLevel >= 5) {
+      return {
+        current: currentLevel,
+        next: null,
+        progress: 100,
+        remaining: 0,
+        nextThreshold: 0
       };
     }
-    
-    // Progress ke Level 2
-    const nextThreshold = VIP_THRESHOLDS[2];
-    const progress = (totalVIP / nextThreshold) * 100;
+
+    const nextThreshold = VIP_THRESHOLDS[nextLevel];
+    const currentThreshold = VIP_THRESHOLDS[currentLevel] || 0;
+    const range = nextThreshold - currentThreshold;
+    const invested = totalVIP - currentThreshold;
+    const progress = range > 0 ? (invested / range) * 100 : 0;
     const remaining = nextThreshold - totalVIP;
-    
-    return { 
-      current: currentLevel, 
-      next: nextLevel, 
-      progress: Math.min(progress, 100), 
+
+    return {
+      current: currentLevel,
+      next: nextLevel,
+      progress: Math.min(Math.max(progress, 0), 100),
       remaining: Math.max(remaining, 0),
-      nextThreshold 
+      nextThreshold
     };
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', { 
-      style: 'currency', 
-      currency: 'IDR', 
-      maximumFractionDigits: 0 
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0
     }).format(amount || 0);
   };
 
   const getVIPConfig = (level) => {
     const configs = {
-      1: { 
-        gradient: 'from-brand-gold to-brand-gold-deep', 
-        text: 'text-brand-gold', 
+      0: {
+        gradient: 'from-gray-500 to-gray-600',
+        text: 'text-gray-400',
+        border: 'border-gray-500/30',
+        icon: 'mdi:account-circle',
+        bgGlow: 'bg-gray-500/20',
+        name: 'Member',
+        description: 'Akses produk dasar'
+      },
+      1: {
+        gradient: 'from-brand-gold to-brand-gold-deep',
+        text: 'text-brand-gold',
         border: 'border-brand-gold/30',
         icon: 'mdi:star-circle',
         bgGlow: 'bg-brand-gold/20',
-        name: 'Level 1',
-        emoji: '⭐',
-        description: 'Akses produk VIP 1'
+        name: 'VIP 1',
+        description: 'Akses produk Finora 1'
       },
-      2: { 
-        gradient: 'from-brand-emerald to-teal-500', 
-        text: 'text-brand-emerald', 
+      2: {
+        gradient: 'from-brand-emerald to-teal-500',
+        text: 'text-brand-emerald',
         border: 'border-brand-emerald/30',
-        icon: 'mdi:crown',
+        icon: 'mdi:star-four-points',
         bgGlow: 'bg-brand-emerald/20',
-        name: 'Level 2',
-        emoji: '👑',
-        description: 'Akses semua produk VIP'
+        name: 'VIP 2',
+        description: 'Akses produk Finora 2'
+      },
+      3: {
+        gradient: 'from-blue-500 to-indigo-600',
+        text: 'text-blue-400',
+        border: 'border-blue-500/30',
+        icon: 'mdi:diamond-stone',
+        bgGlow: 'bg-blue-500/20',
+        name: 'VIP 3',
+        description: 'Akses Finora 3 & Corex'
+      },
+      4: {
+        gradient: 'from-purple-500 to-pink-600',
+        text: 'text-purple-400',
+        border: 'border-purple-500/30',
+        icon: 'mdi:crown',
+        bgGlow: 'bg-purple-500/20',
+        name: 'VIP 4',
+        description: 'Akses produk Finora 4'
+      },
+      5: {
+        gradient: 'from-red-500 to-orange-500',
+        text: 'text-red-400',
+        border: 'border-red-500/30',
+        icon: 'mdi:trophy',
+        bgGlow: 'bg-red-500/20',
+        name: 'VIP 5',
+        description: 'Akses semua produk'
       }
     };
-    return configs[level] || configs[1];
+    return configs[level] || configs[0];
   };
 
   if (loading) {
@@ -140,7 +194,7 @@ export default function VIPPage() {
   }
 
   const vipProgress = getVIPProgress();
-  const currentLevel = userData?.level || 1;
+  const currentLevel = userData?.level ?? 0;
   const currentConfig = getVIPConfig(currentLevel);
 
   return (
@@ -162,7 +216,7 @@ export default function VIPPage() {
       {/* Top Navigation */}
       <div className="sticky top-0 z-20 bg-brand-black/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center">
-          <button 
+          <button
             onClick={() => router.back()}
             className="w-10 h-10 flex items-center justify-center bg-brand-surface hover:bg-brand-surface-soft rounded-xl transition-all duration-300 border border-white/10"
           >
@@ -184,15 +238,15 @@ export default function VIPPage() {
               Status VIP Anda
             </h1>
             <p className="text-sm text-white/60 max-w-2xl mt-2">
-              Pantau level VIP Anda dan akses produk eksklusif. Naik level dengan berinvestasi minimal 10K untuk membuka produk VIP 2 dan 3.
+              Pantau level VIP Anda dan akses produk eksklusif. Naik level dengan berinvestasi di kategori Neura (locked) untuk membuka produk VIP yang lebih tinggi.
             </p>
+          </div>
         </div>
-      </div>
 
         {/* Current VIP Level - Hero Card */}
         <div className="relative mb-8">
           <div className={`absolute -inset-1 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl blur-xl opacity-30`}></div>
-          
+
           <div className="relative bg-brand-surface-soft/90 rounded-3xl p-8 border border-white/10 shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
             <div className="text-center mb-6">
               <div className={`inline-flex items-center gap-4 bg-gradient-to-r ${currentConfig.gradient} rounded-3xl px-8 py-6 shadow-2xl border border-white/20`}>
@@ -224,7 +278,7 @@ export default function VIPPage() {
                     </span>
                   </div>
                   <div className="h-3 bg-white/10 rounded-full overflow-hidden border border-white/10">
-                    <div 
+                    <div
                       className={`h-full bg-gradient-to-r ${getVIPConfig(vipProgress.next).gradient} rounded-full transition-all duration-1000 ease-out`}
                       style={{ width: `${vipProgress.progress}%` }}
                     ></div>
@@ -247,7 +301,7 @@ export default function VIPPage() {
                         <Icon icon="mdi:target" className="text-brand-emerald w-4 h-4" />
                       </div>
                       <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Butuh Lagi</p>
-                  </div>
+                    </div>
                     <p className="text-brand-emerald font-black text-xl">{formatCurrency(vipProgress.remaining)}</p>
                   </div>
                 </div>
@@ -255,7 +309,7 @@ export default function VIPPage() {
             ) : (
               <div className="rounded-2xl border border-brand-emerald/30 bg-gradient-to-r from-brand-emerald/10 to-brand-emerald/5 p-6 text-center">
                 <Icon icon="mdi:trophy" className="w-16 h-16 text-brand-emerald mx-auto mb-3 animate-bounce" />
-                <p className="text-brand-emerald font-black text-xl mb-2">VIP Level Maksimal! 👑</p>
+                <p className="text-brand-emerald font-black text-xl mb-2">VIP Level Maksimal!</p>
                 <p className="text-white/70 text-sm">Anda telah mencapai level VIP tertinggi. Semua produk tersedia untuk Anda.</p>
               </div>
             )}
@@ -272,21 +326,21 @@ export default function VIPPage() {
           </div>
 
           <div className="space-y-4">
-            {[1, 2].map((level) => {
+            {[0, 1, 2, 3, 4, 5].map((level) => {
               const isUnlocked = currentLevel >= level;
               const isCurrent = currentLevel === level;
               const threshold = VIP_THRESHOLDS[level];
               const config = getVIPConfig(level);
 
               return (
-                <div 
+                <div
                   key={level}
                   className={`relative ${isCurrent ? 'scale-[1.02]' : ''} transition-all duration-300`}
                 >
                   {isCurrent && (
                     <div className={`absolute -inset-1 bg-gradient-to-r ${config.gradient} rounded-3xl blur-lg opacity-40`}></div>
                   )}
-                  
+
                   <div className={`
                     relative bg-brand-surface-soft/90 rounded-3xl p-6 border transition-all duration-300 shadow-[0_20px_60px_rgba(5,6,8,0.6)]
                     ${isCurrent ? `${config.border} border-2 shadow-xl` : 'border-white/10'}
@@ -308,12 +362,11 @@ export default function VIPPage() {
                             <h3 className={`text-2xl font-black ${config.text}`}>
                               VIP {level}
                             </h3>
-                            <span className="text-xl">{config.emoji}</span>
                           </div>
                           <p className="text-white/60 text-sm font-semibold">{config.name}</p>
                           {threshold > 0 && (
                             <p className="text-white/70 text-sm font-bold mt-1">
-                              Minimal investasi: {formatCurrency(threshold)}
+                              Minimal investasi Neura: {formatCurrency(threshold)}
                             </p>
                           )}
                           {threshold === 0 && (
@@ -356,7 +409,7 @@ export default function VIPPage() {
                     {!isUnlocked && threshold > 0 && (
                       <div className="mt-4 rounded-xl border border-brand-gold/30 bg-brand-gold/10 p-3 text-center">
                         <p className="text-brand-gold text-sm font-black">
-                          🎯 Target: {formatCurrency(threshold)} untuk membuka level ini
+                          Target: {formatCurrency(threshold)} investasi Neura untuk membuka level ini
                         </p>
                       </div>
                     )}
@@ -370,7 +423,7 @@ export default function VIPPage() {
         {/* How to Upgrade */}
         <div className="relative mb-8">
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold/30 to-brand-emerald/30 rounded-3xl blur-xl opacity-30"></div>
-          
+
           <div className="relative bg-brand-surface-soft/90 rounded-3xl p-6 border border-white/10 shadow-[0_20px_60px_rgba(5,6,8,0.6)]">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-12 h-12 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
@@ -383,10 +436,10 @@ export default function VIPPage() {
               <div className="rounded-2xl border border-brand-emerald/30 bg-gradient-to-br from-brand-emerald/10 to-brand-emerald/5 p-4">
                 <div className="flex items-start gap-3">
                   <Icon icon="mdi:check-circle" className="w-6 h-6 text-brand-emerald flex-shrink-0 mt-0.5" />
-                <div>
-                    <p className="text-brand-emerald font-black text-sm mb-1">Investasi Minimal 10K</p>
+                  <div>
+                    <p className="text-brand-emerald font-black text-sm mb-1">Investasi di Kategori Neura (Locked)</p>
                     <p className="text-white/70 text-xs leading-relaxed">
-                      Untuk naik ke Level 2, Anda perlu berinvestasi minimal Rp 10.000. Setelah mencapai target, Anda akan otomatis naik level dan mendapatkan akses ke produk Level 2 dan 3.
+                      Hanya investasi di kategori Neura (locked profit) yang dihitung untuk naik level VIP. Semakin besar total investasi Neura Anda, semakin tinggi level VIP yang bisa dicapai.
                     </p>
                   </div>
                 </div>
@@ -395,10 +448,10 @@ export default function VIPPage() {
               <div className="rounded-2xl border border-white/10 bg-brand-black/40 p-4">
                 <div className="flex items-start gap-3">
                   <Icon icon="mdi:lightbulb" className="w-6 h-6 text-brand-gold flex-shrink-0 mt-0.5" />
-                <div>
-                    <p className="text-white font-semibold text-sm mb-1">Info Penting</p>
+                  <div>
+                    <p className="text-white font-semibold text-sm mb-1">Syarat VIP</p>
                     <p className="text-white/70 text-xs leading-relaxed">
-                      User baru otomatis berada di Level 1 dan dapat mengakses produk Level 1. Investasi di semua produk akan dihitung untuk progress naik level.
+                      VIP 1: Rp 50.000 | VIP 2: Rp 1.200.000 | VIP 3: Rp 10.000.000 | VIP 4: Rp 30.000.000 | VIP 5: Rp 150.000.000
                     </p>
                   </div>
                 </div>
@@ -433,29 +486,29 @@ export default function VIPPage() {
               <div className="w-10 h-10 rounded-xl bg-brand-emerald/20 border border-brand-emerald/30 flex items-center justify-center">
                 <Icon icon="mdi:crown" className="text-brand-emerald w-5 h-5" />
               </div>
-              <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Investasi VIP</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-white/45 font-semibold">Investasi VIP (Neura)</p>
             </div>
             <p className="text-brand-emerald font-black text-2xl">{formatCurrency(userData?.total_invest_vip || 0)}</p>
-            </div>
           </div>
         </div>
+      </div>
 
       <Copyright />
 
       {/* Bottom Navigation - Floating */}
-          <BottomNavbar />
+      <BottomNavbar />
 
       <style>{`
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
           }
-          
+
           @keyframes slideUp {
             from { transform: translateY(40px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
           }
-          
+
           .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
           .animate-slideUp { animation: slideUp 0.5s ease-out; }
       `}</style>

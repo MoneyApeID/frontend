@@ -2,14 +2,14 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const S3_REGION = process.env.NEXT_PUBLIC_S3_REGION || 'ap-southeast-1';
-const S3_BUCKET = process.env.NEXT_PUBLIC_S3_BUCKET;
-const S3_ACCESS_KEY = process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID;
-const S3_SECRET_KEY = process.env.NEXT_PUBLIC_S3_SECRET_ACCESS_KEY;
+const S3_REGION = process.env.S3_REGION || process.env.NEXT_PUBLIC_S3_REGION || 'ap-southeast-1';
+const S3_BUCKET = process.env.S3_BUCKET;
+const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
+const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
 
 // Validate configuration
 if (!S3_BUCKET || !S3_ACCESS_KEY || !S3_SECRET_KEY) {
-  console.warn('S3 config missing. Check NEXT_PUBLIC_S3_* env vars.');
+  console.warn('S3 config missing. Check server-side S3_* env vars.');
 }
 
 // AWS S3 Client - NO custom endpoint, NO forcePathStyle for native AWS S3
@@ -55,9 +55,9 @@ export default async function handler(req, res) {
 
   // Validate configuration
   const missing = [];
-  if (!S3_BUCKET) missing.push('NEXT_PUBLIC_S3_BUCKET');
-  if (!S3_ACCESS_KEY) missing.push('NEXT_PUBLIC_S3_ACCESS_KEY_ID');
-  if (!S3_SECRET_KEY) missing.push('NEXT_PUBLIC_S3_SECRET_ACCESS_KEY');
+  if (!S3_BUCKET) missing.push('S3_BUCKET');
+  if (!S3_ACCESS_KEY) missing.push('S3_ACCESS_KEY');
+  if (!S3_SECRET_KEY) missing.push('S3_SECRET_KEY');
   
   if (missing.length) {
     console.error('S3 config missing:', missing.join(', '));

@@ -12,6 +12,7 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({
     name: 'Vla Devs',
     company: 'Vla Inc,',
+    min_deposit: 10000,
     min_withdraw: 50000,
     max_withdraw: 10000000,
     withdraw_charge: 2.5,
@@ -53,6 +54,7 @@ export default function AdminSettings() {
           popup_title: res.data.popup_title || '',
           maintenance: res.data.maintenance ?? false,
           closed_register: res.data.closed_register ?? false,
+          min_deposit: res.data.min_deposit ?? 10000,
           max_withdraw: res.data.max_withdraw ?? 10000000,
           min_withdraw: res.data.min_withdraw ?? 50000,
           auto_withdraw: res.data.auto_withdraw ?? false,
@@ -138,6 +140,7 @@ export default function AdminSettings() {
       formData.append('popup_title', settings.popup_title);
       formData.append('maintenance', settings.maintenance ? 'true' : 'false');
       formData.append('closed_register', settings.closed_register ? 'true' : 'false');
+      formData.append('min_deposit', String(settings.min_deposit));
       formData.append('max_withdraw', String(settings.max_withdraw));
       formData.append('min_withdraw', String(settings.min_withdraw));
       formData.append('auto_withdraw', settings.auto_withdraw ? 'true' : 'false');
@@ -411,6 +414,29 @@ export default function AdminSettings() {
                 <div>
                   <h2 className="text-white font-semibold text-lg">Konfigurasi Penarikan</h2>
                   <p className="text-gray-400 text-sm">Atur batasan dan biaya penarikan dana</p>
+                </div>
+              </div>
+
+              {/* Deposit Settings */}
+              <div className="mb-8">
+                <h3 className="text-white font-semibold mb-3">Pengaturan Deposit</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Minimal Deposit</label>
+                    <input
+                      type="number"
+                      name="min_deposit"
+                      value={settings.min_deposit}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/10 border border-white/20 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      min="0"
+                      step="1000"
+                      required
+                    />
+                    <p className="text-gray-500 text-xs mt-1">
+                      Saat ini: {formatCurrency(settings.min_deposit)}
+                    </p>
+                  </div>
                 </div>
               </div>
 

@@ -113,7 +113,9 @@ const nextConfig = {
   images: {
     domains: [
       process.env.NEXT_PUBLIC_S3_ENDPOINT 
-        ? process.env.NEXT_PUBLIC_S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/.*$/, '') 
+        ? process.env.NEXT_PUBLIC_S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+        : process.env.S3_ENDPOINT
+          ? process.env.S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
         : '',
       'localhost',
       '127.0.0.1'

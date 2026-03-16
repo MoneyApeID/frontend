@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Icon } from '@iconify/react';
-import AdminLayout from '../../../../components/admin/Layout';
-import { adminRequest } from '../../../../utils/admin/api';
+import AdminLayout, { showToast } from '../../../../components/admin/Layout';
+import useAdminAuth from '../../../../lib/auth/useAdminAuth';
+import { adminLoginAsUser, adminRequest } from '../../../../utils/admin/api';
 
 export default function UserDetail() {
   const router = useRouter();
   const { id } = router.query;
+  const { loading: authLoading } = useAdminAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -21,11 +23,12 @@ export default function UserDetail() {
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (authLoading || !id) return;
     loadUserDetail();
-  }, [id]);
+  }, [authLoading, id]);
 
   const loadUserDetail = async () => {
     setLoading(true);
@@ -121,7 +124,40 @@ export default function UserDetail() {
     }
   };
 
-  if (loading) {
+  const handleLoginAsUser = async () => {
+    const popup = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+    if (popup) {
+      popup.document.write('<title>Menyiapkan akun user</title><p style="font-family:Arial,sans-serif;padding:24px">Sedang menyiapkan sesi pengguna...</p>');
+      popup.document.close();
+    }
+
+    setImpersonating(true);
+    setError('');
+    try {
+      const res = await adminLoginAsUser(id, popup || window);
+      if (res && res.success) {
+        if (popup) {
+          popup.location.href = '/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
+        showToast(`Berhasil masuk sebagai ${user.name}`, 'success');
+      } else {
+        if (popup) popup.close();
+        const message = res?.message || 'Gagal masuk sebagai pengguna';
+        setError(message);
+        showToast(message, 'error');
+      }
+    } catch (error) {
+      if (popup) popup.close();
+      setError('Gagal masuk sebagai pengguna');
+      showToast('Gagal masuk sebagai pengguna', 'error');
+    } finally {
+      setImpersonating(false);
+    }
+  };
+
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center">
@@ -447,6 +483,24 @@ export default function UserDetail() {
             </div>
 
             <div className="space-y-3">
+              <button
+                onClick={handleLoginAsUser}
+                disabled={impersonating}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95 disabled:scale-100"
+              >
+                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+                  {impersonating ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <Icon icon="mdi:login-variant" className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">{impersonating ? 'Menyiapkan Sesi...' : 'Masuk Sebagai User'}</div>
+                  <div className="text-xs text-emerald-100">Login 1 klik tanpa password user</div>
+                </div>
+              </button>
+
               <button
                 onClick={() => { setShowBalanceModal(true); setError(''); }}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95"

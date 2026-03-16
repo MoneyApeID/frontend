@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { Icon } from '@iconify/react';
-import AdminLayout from '../../components/admin/Layout';
+import AdminLayout, { showToast } from '../../components/admin/Layout';
 import useAdminAuth from '../../lib/auth/useAdminAuth';
-import { adminRequest } from '../../utils/admin/api';
+import { adminLoginAsUser, adminRequest } from '../../utils/admin/api';
 
 export default function UserManagement() {
   const { loading: authLoading } = useAdminAuth();
@@ -20,6 +20,7 @@ export default function UserManagement() {
   const [searchInput, setSearchInput] = useState('');
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [impersonatingUserId, setImpersonatingUserId] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -101,6 +102,35 @@ export default function UserManagement() {
       }
     } catch (error) {
       console.error('Failed to update user status:', error);
+    }
+  };
+
+  const handleLoginAsUser = async (user) => {
+    const popup = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+    if (popup) {
+      popup.document.write('<title>Menyiapkan akun user</title><p style="font-family:Arial,sans-serif;padding:24px">Sedang menyiapkan sesi pengguna...</p>');
+      popup.document.close();
+    }
+
+    setImpersonatingUserId(user.id);
+    try {
+      const res = await adminLoginAsUser(user.id, popup || window);
+      if (res && res.success) {
+        if (popup) {
+          popup.location.href = '/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
+        showToast(`Berhasil masuk sebagai ${user.name}`, 'success');
+      } else {
+        if (popup) popup.close();
+        showToast(res?.message || 'Gagal masuk sebagai pengguna', 'error');
+      }
+    } catch (error) {
+      if (popup) popup.close();
+      showToast('Gagal masuk sebagai pengguna', 'error');
+    } finally {
+      setImpersonatingUserId(null);
     }
   };
 
@@ -338,6 +368,18 @@ export default function UserManagement() {
                         title={user.status === 'Suspend' ? 'Batalkan Suspend' : 'Suspend Pengguna'}
                       >
                         <Icon icon={user.status === 'Suspend' ? 'mdi:account-check' : 'mdi:account-cancel'} className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleLoginAsUser(user)}
+                        disabled={impersonatingUserId === user.id}
+                        className="p-2 bg-emerald-600/20 hover:bg-emerald-600/30 disabled:bg-white/10 disabled:text-gray-500 text-emerald-400 rounded-xl transition-all duration-300 hover:scale-110 disabled:scale-100"
+                        title="Masuk sebagai user"
+                      >
+                        {impersonatingUserId === user.id ? (
+                          <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin"></div>
+                        ) : (
+                          <Icon icon="mdi:login-variant" className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>

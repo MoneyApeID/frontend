@@ -52,7 +52,7 @@ export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [applicationData, setApplicationData] = useState(null);
   const [products, setProducts] = useState({});
-  const [selectedCategory, setSelectedCategory] = useState('Monitor');
+  const [selectedCategory, setSelectedCategory] = useState('Neura');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,8 +141,8 @@ export default function Dashboard() {
       
       if (data && data.data) {
         const categories = Object.keys(data.data);
-        // Order tabs explicitly: Monitor (left), Insight (middle), Autopilot (right)
-        const preferred = ['Monitor', 'Insight', 'Autopilot'];
+        // Order tabs explicitly: Neura, Finora, Corex
+        const preferred = ['Neura', 'Finora', 'Corex'];
         const orderedCategories = [
           // first include preferred keys in that exact order if they exist
           ...preferred.filter(k => categories.includes(k)),
@@ -482,7 +482,7 @@ export default function Dashboard() {
                 <div className="flex gap-2 mb-6 pb-2">
                   {(() => {
                     const categories = Object.keys(products);
-                    const preferred = ['Monitor', 'Insight', 'Autopilot'];
+                    const preferred = ['Neura', 'Finora', 'Corex'];
                     const orderedCategories = [
                       ...preferred.filter(k => categories.includes(k)),
                       ...categories.filter(k => !preferred.includes(k))

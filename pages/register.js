@@ -112,7 +112,7 @@ export default function Register() {
       number: /^8[0-9]{8,11}$/.test(formData.number),
       password: formData.password.length >= 6,
       passwordMatch: formData.password === formData.password_confirmation && formData.password.length > 0,
-      referralCode: formData.referral_code.trim().length > 0
+      referralCode: true
     });
     setPasswordStrength(checkPasswordStrength(formData.password));
   }, [formData]);
@@ -565,7 +565,7 @@ export default function Register() {
                     <div className="space-y-2">
                       <label htmlFor="referral_code" className="block text-[#D8CFB6] text-sm font-semibold flex items-center gap-2">
                         <Icon icon="mdi:gift-outline" className="w-4 h-4 text-[#E8C152]" />
-                        Kode Referral
+                        Kode Referral <span className="text-[#D8CFB6]/40 text-xs font-normal">(Opsional)</span>
                       </label>
                       <div className="relative group">
                         <div className={`brand-input ${referralLocked ? 'opacity-75' : ''}`}>
@@ -580,7 +580,7 @@ export default function Register() {
                             value={formData.referral_code}
                             onChange={handleChange}
                             disabled={referralLocked}
-                            required
+
                           />
                           <div className="flex items-center px-4 py-4 shrink-0">
                             {referralLocked ? (

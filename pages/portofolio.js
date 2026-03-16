@@ -63,7 +63,7 @@ export default function Portofolio() {
         const data = res.data || {};
         setInvestments(data);
         const origKeys = Object.keys(data);
-        const preferred = ['Monitor', 'Insight', 'Autopilot'];
+        const preferred = ['Neura', 'Finora', 'Corex'];
         const keys = [
           ...preferred.filter(k => origKeys.includes(k)),
           ...origKeys.filter(k => !preferred.includes(k))

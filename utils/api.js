@@ -3,25 +3,59 @@ import { handleApiResponse } from './apiHandler';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+const getTargetWindow = (targetWindow) => {
+  if (targetWindow) return targetWindow;
+  if (typeof window !== 'undefined') return window;
+  return null;
+};
+
 // Cookie helpers (simple, not HttpOnly — server should set HttpOnly cookie if possible)
-function setCookie(name, value, days = 30) {
-  if (typeof document === 'undefined') return;
+function setCookie(name, value, days = 30, targetWindow) {
+  const win = getTargetWindow(targetWindow);
+  if (!win?.document) return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+  win.document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
 }
 
-function getCookie(name) {
-  if (typeof document === 'undefined') return null;
-  return document.cookie.split('; ').reduce((r, v) => {
+function getCookie(name, targetWindow) {
+  const win = getTargetWindow(targetWindow);
+  if (!win?.document) return null;
+  return win.document.cookie.split('; ').reduce((r, v) => {
     const parts = v.split('=');
     return parts[0] === name ? decodeURIComponent(parts[1]) : r;
   }, null);
 }
 
-function deleteCookie(name) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+function deleteCookie(name, targetWindow) {
+  const win = getTargetWindow(targetWindow);
+  if (!win?.document) return;
+  win.document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 }
+
+export const setUserSessionData = (authData, targetWindow) => {
+  const win = getTargetWindow(targetWindow);
+  if (!win || !authData?.access_token || !authData?.access_expire) return;
+
+  win.sessionStorage.setItem('token', authData.access_token);
+  win.sessionStorage.setItem('access_expire', authData.access_expire);
+
+  if (authData.refresh_token) {
+    setCookie('refresh_token', authData.refresh_token, 30, win);
+  }
+
+  try {
+    if (authData.application) {
+      win.localStorage.setItem('application', JSON.stringify(authData.application));
+    }
+    if (authData.user) {
+      win.localStorage.setItem('user', JSON.stringify(authData.user));
+    }
+  } catch (error) {}
+
+  try {
+    win.dispatchEvent(new Event('user-token-changed'));
+  } catch (error) {}
+};
 
 let isRefreshing = false;
 let refreshQueue = [];
@@ -365,14 +399,7 @@ export const registerUser = async (userData) => {
     const data = await response.json();
     
     if (response.ok && data.success) {
-      // Store tokens and user info
-      sessionStorage.setItem('token', data.data.access_token);
-      sessionStorage.setItem('access_expire', data.data.access_expire);
-      // store refresh token in cookie
-      setCookie('refresh_token', data.data.refresh_token, 30);
-      localStorage.setItem('application', JSON.stringify(data.data.application));
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-  try { window.dispatchEvent(new Event('user-token-changed')); } catch {}
+      setUserSessionData(data.data);
       return data;
     }
     throw new Error(data.message || 'Registration failed');
@@ -392,13 +419,7 @@ export const loginUser = async (credentials) => {
     const data = await response.json();
     
     if (response.ok && data.success) {
-      // Store tokens and user info
-      sessionStorage.setItem('token', data.data.access_token);
-      sessionStorage.setItem('access_expire', data.data.access_expire);
-      setCookie('refresh_token', data.data.refresh_token, 30);
-      localStorage.setItem('application', JSON.stringify(data.data.application));
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-  try { window.dispatchEvent(new Event('user-token-changed')); } catch {}
+      setUserSessionData(data.data);
       return data;
     }
     throw new Error(data.message || 'Login failed');

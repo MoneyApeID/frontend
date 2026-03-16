@@ -4,24 +4,24 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import BottomNavbar from '../components/BottomNavbar';
-import { createDeposit } from '../utils/api';
+import { createDeposit, getInfo } from '../utils/api';
 import { BANKS } from '../constants/products';
 import Copyright from '../components/copyright';
 
-const DEPOSIT_METHODS = [
+const getDepositMethods = (minDeposit = 1) => [
   {
     code: 'QRIS',
     title: 'QRIS',
     description: 'Instan, cocok untuk nominal cepat hingga Rp 10.000.000',
     icon: 'mdi:qrcode-scan',
-    limit: { min: 10000, max: 10000000 },
+    limit: { min: minDeposit, max: 10000000 },
   },
   {
     code: 'BANK',
     title: 'Transfer Bank',
     description: 'Gunakan untuk nominal besar hingga Rp 100.000.000',
     icon: 'mdi:bank-transfer',
-    limit: { min: 10000, max: 100000000 },
+    limit: { min: minDeposit, max: 100000000 },
   },
 ];
 
@@ -88,6 +88,7 @@ const getApplicationSnapshot = () => {
       name: parsed.name || 'Money Rich',
       link_cs: parsed.link_cs || '',
       link_group: parsed.link_group || '',
+      min_deposit: parsed.min_deposit || 10000,
     };
   } catch (error) {
     return { name: 'Money Rich' };
@@ -112,8 +113,25 @@ export default function Deposit() {
       router.push('/login');
       return;
     }
+
     setUserSnapshot(getUserSnapshotFromStorage());
     setApplicationData(getApplicationSnapshot());
+
+    // Refresh application settings (including min_deposit) from API so changes in admin take effect.
+    (async () => {
+      try {
+        const data = await getInfo();
+        if (data && data.success && data.data) {
+          const app = data.data;
+          const stored = JSON.parse(sessionStorage.getItem('application') || '{}');
+          const merged = { ...(stored || {}), ...app };
+          sessionStorage.setItem('application', JSON.stringify(merged));
+          setApplicationData((prev) => ({ ...(prev || {}), ...app }));
+        }
+      } catch (err) {
+        // ignore
+      }
+    })();
   }, [router]);
 
   useEffect(() => {
@@ -122,9 +140,10 @@ export default function Deposit() {
     }
   }, [selectedMethod, selectedBank]);
 
+  const depositMethods = getDepositMethods(applicationData?.min_deposit || 1);
   const methodMeta =
-    DEPOSIT_METHODS.find((method) => method.code === selectedMethod) ||
-    DEPOSIT_METHODS[0];
+    depositMethods.find((method) => method.code === selectedMethod) ||
+    depositMethods[0];
   const limits = methodMeta.limit;
   const quickAmounts = QUICK_AMOUNTS[selectedMethod] || QUICK_AMOUNTS.QRIS;
   const amountNumber = Number(amount);
@@ -414,7 +433,7 @@ export default function Deposit() {
                       Metode Pembayaran
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {DEPOSIT_METHODS.map((method) => {
+                      {depositMethods.map((method) => {
                         const isActive = selectedMethod === method.code;
                         return (
                           <button

@@ -106,9 +106,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       badge: 3,
       color: "from-yellow-600 to-orange-600"
     },
-    { 
-      icon: "mdi:swap-horizontal", 
-      label: "Kelola Transaksi", 
+    {
+      icon: "mdi:bank-transfer-out",
+      label: "Penarikan Admin",
+      path: "/panel-admin/withdraw",
+      badge: null,
+      color: "from-red-600 to-pink-600"
+    },
+    {
+      icon: "mdi:swap-horizontal",
+      label: "Kelola Transaksi",
       path: "/panel-admin/transactions",
       badge: null,
       color: "from-indigo-600 to-purple-600"

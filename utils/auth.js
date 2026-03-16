@@ -22,6 +22,7 @@ export const redirectToLogin = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('access_expire');
     deleteCookie('refresh_token');
+    if (window.location.pathname.startsWith('/panel-admin')) return;
     window.location.href = '/login';
   }
 };
