@@ -2,9 +2,9 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "ca.ciroos",
+    "package_name": "co.moneyrich",
     "sha256_cert_fingerprints": [
-      "02:02:0D:E2:3B:12:E5:4B:CF:F3:05:EE:5B:56:52:DB:20:E1:F2:35:01:E5:7A:53:A7:96:DB:56:78:32:05:7F"
+      "A8:38:88:E9:F6:53:48:5E:7C:D1:F5:A9:26:09:20:02:BB:EF:8F:19:DD:E4:91:8F:57:47:04:5E:D9:2B:59:43"
     ]
   }
 }]
