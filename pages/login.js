@@ -159,8 +159,10 @@ export default function Login() {
     return (
         <>
             <Head>
-                <title>{applicationData?.name || 'Money Rich'} | Login</title>
-                <meta name="description" content={`${applicationData?.name || 'Money Rich'} secure investment platform`} />
+                <title>{applicationData?.name || 'Money Rich'} | Masuk</title>
+                <meta name="description" content={`Masuk ke akun${applicationData?.name ? ' ' + applicationData.name : ''} - Akses layanan platform dengan aman.`} />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href="https://moneyrich.co/login" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
 
@@ -194,14 +196,14 @@ export default function Login() {
                                         </div>
                                             <div>
                                 <p className="text-xs uppercase tracking-[0.35em] text-white/40">Money Rich</p>
-                                <h1 className="text-2xl font-semibold text-white">Masuk ke ekosistem investasi eksklusif</h1>
+                                <h1 className="text-2xl font-semibold text-white">Masuk ke Akun Anda</h1>
                                     </div>
                                 </div>
 
                         <div className="flex items-center gap-6">
                             <div>
-                                <p className="text-xs uppercase tracking-widest text-white/40">Total Portofolio</p>
-                                <p className="text-2xl font-black text-brand-gold">Rp1.2T+</p>
+                                <p className="text-xs uppercase tracking-widest text-white/40">Platform Terpercaya</p>
+                                <p className="text-2xl font-black text-brand-gold">10K+</p>
                             </div>
                             <div className="hidden sm:flex h-12 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
                             <div className="flex items-center gap-3">
@@ -223,11 +225,11 @@ export default function Login() {
                                     <span className="h-1.5 w-1.5 rounded-full bg-brand-gold animate-pulse"></span>
                                     Premium platform
                                 </span>
-                                <h2 className="text-4xl lg:text-5xl font-black leading-tight">
-                                    Bangun kekuatan finansial bersama <span className="text-brand-gold">Money Rich</span>
+<h2 className="text-4xl lg:text-5xl font-black leading-tight">
+                                    Kelola aktivitas Anda bersama <span className="text-brand-gold">Money Rich</span>
                                 </h2>
                                 <p className="text-base text-white/60 max-w-xl">
-                                    Nikmati strategi investasi terkurasi dengan analitik real-time, program loyalti eksklusif, dan dukungan ahli sepanjang perjalanan finansial Anda.
+                                    Akses berbagai layanan dan fitur platform dengan dukungan penuh dari tim kami.
                                 </p>
                                             </div>
 
@@ -235,23 +237,23 @@ export default function Login() {
                                 <div className="rounded-3xl border border-white/10 bg-brand-surface/80 p-6 shadow-[0_0_35px_rgba(232,193,82,0.12)] hover:border-brand-gold/40 transition-all duration-300">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="h-11 w-11 rounded-xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
-                                            <Icon icon="mdi:timeline-plus" className="w-6 h-6" />
+                                            <Icon icon="mdi:lightning-bolt" className="w-6 h-6" />
                                         </div>
-                                        <h3 className="text-lg font-semibold text-white">AI Insight</h3>
+                                        <h3 className="text-lg font-semibold text-white">Akses Cepat</h3>
                                     </div>
                                     <p className="text-sm text-white/55 leading-relaxed">
-                                        Rekomendasi cerdas yang adaptif terhadap tren pasar secara instan.
+                                        Akses berbagai fitur dan layanan platform dengan mudah dan cepat.
                                     </p>
                                             </div>
                                 <div className="rounded-3xl border border-white/10 bg-brand-surface/80 p-6 shadow-[0_0_35px_rgba(232,193,82,0.12)] hover:border-brand-gold/40 transition-all duration-300">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="h-11 w-11 rounded-xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
-                                            <Icon icon="mdi:chart-donut" className="w-6 h-6" />
+                                            <Icon icon="mdi:shield-check" className="w-6 h-6" />
                                             </div>
-                                        <h3 className="text-lg font-semibold text-white">Yield Stabil</h3>
+                                        <h3 className="text-lg font-semibold text-white">Aman & Terpercaya</h3>
                                         </div>
                                     <p className="text-sm text-white/55 leading-relaxed">
-                                        Portofolio diversifikasi dengan proyeksi imbal hasil transparan dan konsisten.
+                                        Platform yang aman dengan standar keamanan terkini untuk data Anda.
                                     </p>
                                             </div>
                                 <div className="rounded-3xl border border-white/10 bg-brand-surface/80 p-6 shadow-[0_0_35px_rgba(232,193,82,0.12)] hover:border-brand-gold/40 transition-all duration-300 sm:col-span-2">
@@ -259,10 +261,10 @@ export default function Login() {
                                         <div className="h-11 w-11 rounded-xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center text-brand-gold">
                                             <Icon icon="mdi:headset" className="w-6 h-6" />
                                             </div>
-                                        <h3 className="text-lg font-semibold text-white">Concierge 24/7</h3>
+                                        <h3 className="text-lg font-semibold text-white">Dukungan 24/7</h3>
                                         </div>
                                     <p className="text-sm text-white/55 leading-relaxed">
-                                        Akses dukungan prioritas kapan pun Anda memerlukan panduan finansial personal.
+                                        Tim support siap membantu kapan pun Anda memerlukan bantuan.
                                     </p>
                                     </div>
                                 </div>
@@ -280,7 +282,7 @@ export default function Login() {
                                         <span className="h-9 w-9 rounded-full border border-brand-surface bg-brand-gold/20"></span>
                                         </div>
                                     <p className="text-sm text-white/60 max-w-[220px]">
-                                        Komunitas aktif berbagi strategi dan update eksklusif setiap hari.
+                                        Komunitas aktif dengan update dan informasi terbaru setiap hari.
                                     </p>
                                         </div>
                                     </div>
@@ -308,13 +310,13 @@ export default function Login() {
                                         )}
                                                 </div>
                                     <div className="space-y-1">
-                                        <h2 className="text-xl font-bold text-white">Masuk ke Money Rich</h2>
-                                        <p className="text-xs text-white/60">Kelola investasi Anda dengan aman di mana saja</p>
+                                        <h2 className="text-xl font-bold text-white">Masuk ke Akun Anda</h2>
+                                        <p className="text-xs text-white/60">Akses akun Anda dengan aman di mana saja</p>
                                             </div>
                                         </div>
                                 <div className="text-center mb-8 space-y-2">
                                     <h2 className="text-3xl font-bold text-white">Masuk</h2>
-                                    <p className="text-sm text-white/55">Aktifkan strategi Money Rich Anda.</p>
+                                    <p className="text-sm text-white/55">Akses akun Money Rich Anda.</p>
                                     </div>
 
                                     {notification.message && (

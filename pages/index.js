@@ -20,8 +20,8 @@ export default function Home() {
     return (
         <>
             <Head>
-                <title>Money Rich - Exclusive Investment Hub</title>
-                <meta name="description" content="Money Rich - Platform investasi eksklusif dengan strategi modern dan aman." />
+                <title>Money Rich - Platform Layanan Digital</title>
+                <meta name="description" content="Money Rich - Platform digital modern untuk berbagai kebutuhan layanan Anda." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
         </>

@@ -238,8 +238,10 @@ export default function Register() {
   return (
     <>
       <Head>
-        <title>{applicationData?.name || 'Money Rich'} | Register</title>
-        <meta name="description" content={`${applicationData?.name || 'Money Rich'} registration`} />
+        <title>{applicationData?.name || 'Money Rich'} | Daftar Akun</title>
+        <meta name="description" content={`Daftar akun${applicationData?.name ? ' ' + applicationData.name : ''} - Buat akun untuk mengakses layanan platform.`} />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://moneyrich.co/register" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -262,9 +264,9 @@ export default function Register() {
                       <Icon icon="mdi:rocket-launch" className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">Mulai Perjalanan Anda</h3>
+                      <h3 className="text-lg font-semibold text-white mb-2">Bergabung Bersama Kami</h3>
                       <p className="text-white/60 text-sm leading-relaxed">
-                        Bergabunglah dengan ribuan investor yang telah mempercayakan strategi mereka pada ekosistem Money Rich.
+                        Buat akun untuk mengakses layanan dan fitur platform kami.
                       </p>
                     </div>
                   </div>
@@ -274,23 +276,23 @@ export default function Register() {
                   <div className="bg-brand-surface/75 border border-white/10 rounded-3xl p-5 shadow-[0_0_35px_rgba(232,193,82,0.12)]">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-xl bg-brand-gold/15 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
-                        <Icon icon="mdi:cash-multiple" className="w-5 h-5" />
+                        <Icon icon="mdi:gift" className="w-5 h-5" />
                       </div>
-                      <h4 className="text-sm font-semibold text-white">Bonus Pendaftaran</h4>
+                      <h4 className="text-sm font-semibold text-white">Keuntungan Member</h4>
                     </div>
                     <p className="text-xs text-white/55">
-                      Raih welcome bonus eksklusif ketika menyelesaikan registrasi dan deposit pertama.
+                      Nikmati berbagai keuntungan dan fitur eksklusif setelah mendaftar.
                     </p>
                   </div>
                   <div className="bg-brand-surface/75 border border-white/10 rounded-3xl p-5 shadow-[0_0_35px_rgba(232,193,82,0.12)]">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-xl bg-brand-emerald/15 border border-brand-emerald/25 flex items-center justify-center text-brand-emerald">
-                        <Icon icon="mdi:account-supervisor" className="w-5 h-5" />
+                        <Icon icon="mdi:account-group" className="w-5 h-5" />
                       </div>
-                      <h4 className="text-sm font-semibold text-white">Program Referral</h4>
+                      <h4 className="text-sm font-semibold text-white">Bagikan & Dapatkan</h4>
                     </div>
                     <p className="text-xs text-white/55">
-                      Ajak teman dan dapatkan komisi berlapis dari setiap investasi yang mereka lakukan.
+                      Ajak kenalan bergabung dan dapatkan keuntungan dari program bagikan.
                     </p>
                   </div>
                   <div className="bg-brand-surface/75 border border-white/10 rounded-3xl p-5 shadow-[0_0_35px_rgba(232,193,82,0.12)] sm:col-span-2">
@@ -298,10 +300,10 @@ export default function Register() {
                       <div className="w-10 h-10 rounded-xl bg-brand-gold/15 border border-brand-gold/25 flex items-center justify-center text-brand-gold">
                         <Icon icon="mdi:shield-star" className="w-5 h-5" />
                       </div>
-                      <h4 className="text-sm font-semibold text-white">Akses Premium</h4>
+                      <h4 className="text-sm font-semibold text-white">Fitur Lengkap</h4>
                     </div>
                     <p className="text-xs text-white/55 leading-relaxed">
-                      Dapatkan rekomendasi strategi, analitik real-time, dan dukungan concierge tanpa batas.
+                      Akses berbagai fitur dan layanan dengan dukungan penuh dari tim kami.
                     </p>
                   </div>
                 </div>
@@ -375,8 +377,7 @@ export default function Register() {
                         </div>
                       </div>
 
-                      <h2 className="text-3xl font-bold text-white">Buat Akun Money Rich</h2>
-                      <p className="text-white/60 text-sm">Langkah pertama menuju investasi eksklusif</p>
+                      <h2 className="text-3xl font-bold text-white">Buat Akun</h2>378:                       <p className="text-white/60 text-sm">Daftar untuk mulai menggunakan layanan kami</p>
                     </div>
 
                     {/* Notification */}
