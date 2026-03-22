@@ -266,6 +266,82 @@ export default function AdminDashboard() {
         />
       </div>
 
+      {/* Deposit Statistics */}
+      <div className="mb-6">
+        <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+          <Icon icon="mdi:cash-plus" className="w-5 h-5 text-emerald-400" />
+          Statistik Deposit
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Total Deposit"
+            value={`Rp ${data.deposit_stats?.total?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:cash-plus"
+            color="green"
+            isAmount={true}
+          />
+          <StatCard
+            title="Deposit Sukses"
+            value={`Rp ${data.deposit_stats?.success?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:check-circle"
+            color="green"
+            isAmount={true}
+          />
+          <StatCard
+            title="Deposit Pending"
+            value={`Rp ${data.deposit_stats?.pending?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:clock-outline"
+            color="yellow"
+            isAmount={true}
+          />
+          <StatCard
+            title="Deposit Gagal"
+            value={`Rp ${data.deposit_stats?.failed?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:close-circle"
+            color="red"
+            isAmount={true}
+          />
+        </div>
+      </div>
+
+      {/* Withdrawal Statistics */}
+      <div className="mb-8">
+        <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+          <Icon icon="mdi:cash-minus" className="w-5 h-5 text-orange-400" />
+          Statistik Penarikan
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Total Penarikan"
+            value={`Rp ${data.withdrawal_stats?.total?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:cash-minus"
+            color="orange"
+            isAmount={true}
+          />
+          <StatCard
+            title="Penarikan Sukses"
+            value={`Rp ${data.withdrawal_stats?.success?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:check-circle"
+            color="green"
+            isAmount={true}
+          />
+          <StatCard
+            title="Penarikan Pending"
+            value={`Rp ${data.withdrawal_stats?.pending?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:clock-outline"
+            color="yellow"
+            isAmount={true}
+          />
+          <StatCard
+            title="Penarikan Gagal"
+            value={`Rp ${data.withdrawal_stats?.failed?.toLocaleString('id-ID') || '0'}`}
+            icon="mdi:close-circle"
+            color="red"
+            isAmount={true}
+          />
+        </div>
+      </div>
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
         {/* Investment Chart - Takes 2 columns */}
@@ -522,7 +598,9 @@ function StatCard({ title, value, change, changeText, icon, color, trend, isAmou
     blue: { bg: 'from-blue-600 to-cyan-600', text: 'text-blue-400', border: 'border-blue-500/30' },
     green: { bg: 'from-green-600 to-emerald-600', text: 'text-green-400', border: 'border-green-500/30' },
     purple: { bg: 'from-purple-600 to-pink-600', text: 'text-purple-400', border: 'border-purple-500/30' },
-    yellow: { bg: 'from-yellow-600 to-orange-600', text: 'text-yellow-400', border: 'border-yellow-500/30' }
+    yellow: { bg: 'from-yellow-600 to-orange-600', text: 'text-yellow-400', border: 'border-yellow-500/30' },
+    orange: { bg: 'from-orange-600 to-red-600', text: 'text-orange-400', border: 'border-orange-500/30' },
+    red: { bg: 'from-red-600 to-rose-600', text: 'text-red-400', border: 'border-red-500/30' }
   };
 
   const trendIcons = {
